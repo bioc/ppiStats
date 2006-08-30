@@ -42,10 +42,20 @@ bpMatrix <- function(y2h, symMat = TRUE, homodimer=FALSE, baitAsPrey = FALSE,
   dimnames(bpMat) <- list(baits, preys)
 
   nonTrivialIndex <- which(sapply(y2h,length) != 0)
+  btmp <- baits[nonTrivialIndex]
   
-  mapply(function(x,y){bpMats[x,y] == 1},baits[nonTrivialIndex],
-         y2h[nonTrivialIndex])
-  
+  if(length(btmp)!=0 && length(length(y2h[nonTrivialIndex])!=0)){
+    
+    preyCount <- lapply(y2h, table)
+    
+    preyCount <- preyCount[nonTrivialIndex]
+    
+    for(i in 1:length(preyCount)){
+      bpMat[btmp[i], names(preyCount[[i]])] = as.vector(preyCount[[i]])
+    }
+    
+  }
+    
   if(!homodimer){diag(bpMat)=0}
   if(unWeighted){
     mode(bpMat) = "logical"
@@ -53,7 +63,7 @@ bpMatrix <- function(y2h, symMat = TRUE, homodimer=FALSE, baitAsPrey = FALSE,
   }
 
   if(baitsOnly){
-    bpMat[,rownames(bpMats)]
+    bpMat <- bpMat[,rownames(bpMat), drop=FALSE]
   }
     
   bpMat

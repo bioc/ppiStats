@@ -54,7 +54,7 @@ bpMatrix(y2h, symMat = TRUE, homodimer = FALSE, baitAsPrey = FALSE
 
 \examples{
 data(y2hSysGW)
-eg <- y2hSysGW[3]
-bpMatrix(eg)
+eg <- y2hSysGW[2:4]
+lapply(eg, bpMatrix)
 }
 \keyword{datagen}
