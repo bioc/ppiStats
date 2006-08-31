@@ -54,7 +54,10 @@ library(ppiStats)
 
 For the remainder of the vignette, we shall only be concerned with collecting 
 three particular Y2H data-sets: those corresponding to "awasthi-2001-1", 
-"cagney-2001-1", and "zhao-2005-2". 
+"cagney-2001-1", and "zhao-2005-2". We also use two new terms: viable baits and
+viable preys. A viable bait for a particular experiment is any protein sampled 
+as a bait that detects at least one other protein as prey within the respective
+experiment. Viable preys are similarly defined. 
 
 The first function that we will call will be the \Rfunction{collectIntactPPIData}
 function. As the name implies, this function goes into the Intact repository,
@@ -64,7 +67,11 @@ its primary souce and collects the relevant data given the particular experiment
 example ("awasthi-2001-1", "cagney-2001-1", "zhao-2005-2") is identified 
 within IntAct by the AC codes ("EBI-531419", "EBI-698096","EBI-762635"). Before
 we can gather the information concerning any empirical data, we must first 
-identify its AC code.
+identify its corresponding AC code. (We shall discuss this at the end since
+this involves searching the internet.)
+
+Let's begin by collecting the specified data-sets via the function
+\Rfunction{collectIntactPPIData}:
 
 <<collectData>>=
 
@@ -74,14 +81,20 @@ dataList[["shortLabel"]]
 
 @ 
 
+The only argument that \Rfunction{collectIntactPPIData} takes is a character
+vector of IntAct AC codes which corresponds to particular data-sets (or 
+equivalently, the experiments).
+
 The return value for the function \Robject{collectIntactPPIData} is a list of
 five elements. The "allBaits" and "allPreys" entries of this list contains the
-IntAct Accession Identification Codes of all the unique proteins that proved to 
+IntAct AC Codes of all the unique proteins that proved to 
 be viable baits (respectively viable preys) over all the experiments for which we
-sought data (in our case, over all three experiments). 
-The "baitsSystematic" and "preysSystematic" entries are named lists; the 
-names corrospond to the IntAct AC codes while the entries are the systematic 
-gene name(s) that each AC code can be mapped to.
+sought data (in our case, over all three experiments). Though we cannot determine 
+the viable baits from any particular experiment from the "allBaits" entry 
+(similarly for the "allPreys"), but we shall see that this can be done another 
+entry to be discussed. The "baitsSystematic" and "preysSystematic" entries are 
+named lists; the names corrospond to the IntAct AC codes while the entries are 
+the systematic gene name(s) that each AC code can be mapped to. 
 
 <<exBaitsSys>>=
 dataList[["baitsSystematic"]][1:5]
@@ -91,7 +104,11 @@ The "indexSetAll" entry of dataList contains the bait to prey associations
 for each of the empirical data set. The "indexSetAll" entry contains sub-lists 
 corresponding to each empirical data set. Each sub-list contains a number of 
 length two character vectors: the first entry of this character vector is the
-bait protein (give by AC code), and the second is the prey protein.
+bait protein (give by AC code), and the second is the prey protein. Thus, it is
+not too difficult to obtain the viable baits and viable prey from the 
+"indexSetAll" entry with a little bit of coding. This method is still quite
+inconvienent since we would still be left with the intact AC codes rather
+than anything meaningful about the bait and prey proteins.
 
 <<indexSet>>=
 dataList[["indexSetAll"]][1]
@@ -151,25 +168,26 @@ bpMats[1]
 @
 
 Other than the sparse matrix representation for the empirical data, there are seven 
-other arguments that the R-function \Rfunction{bpMatrix} takes. We shall discuss these
-parameters in turn. The argument \Robject{homodimer} is a logical parameter; if FALSE,
-all homodimer relationships will be disregarded, otherwise the homodimer relationships
-will be recorded in the adjacency matrix. The argument \Robject{unWeighted} is also a 
-logical; if TRUE, the entries of the adjacency matrix will be binary (0,1) to account
-for the presence or absence of the bait to prey interaction without regards for 
-multiplicity. Next, the argument \Robject{onlyRecip} is also a logical parameter; if
-this argument is set to TRUE, the only interactions that the adjacency matrix will 
-record will be those which are reciprocated, i.e. if protein b detects protein p and
-if protein p detects protein b, these will be the only interactions recorded by the
-the adjacency matrix, and so the matrix will be symmetric. The last three arguments,
-\Robject{symMat}, \Robject{baitAsPrey}, and \Robject{baitsOnly} determines the indexing
-set for the rows and columns of the adjacency matrix. If the \Robject{symMat} is TRUE,
-the the union of viable baits and viable preys will index both the rows and columns;
-this is necessary if we want to create an instance of the class \Rclass{graph}. If
-the argument \Robject{baitAsPrey} is TRUE, then the columns are indexed by the 
-union of viable baits and viable preys while the rows are indexed by only the viable
-baits. Lastly, if the argument \Robject{baitsOnly} is TRUE, then the matrix will be
-indexed by the viable baits in both the row and the columns of the adjacency matrix.
+other arguments (all logical) that the R-function \Rfunction{bpMatrix} takes. 
+We shall discuss these parameters in turn. 
+
+\begin{itemize}
+\item \Robject{homodimer}: If FALSE, all homodimer relationships will be disregarded, 
+otherwise the homodimer relationships will be recorded in the adjacency matrix.
+\item \Robject{unWeighted}: If TRUE, the entries of the adjacency matrix will be binary
+(0,1) to account for the presence or absence of the bait to prey interaction 
+without regards for multiplicity.
+\item \Robject{onlyRecip}: If TRUE, the matrix will be symmetric with only reciprocated
+interactions recorded in the adjacency matrix.
+\item \Robject{symMat}: If TRUE, the union of viable baits and viable preys will index 
+both the rows and columns of the adjacency matrix.
+\item \Robject{baitAsPrey}: If TRUE, the union of the viable baits and viable preys will
+index the columns while only the viable baits will index the rows.
+\item \Robject{baitsOnly}: If TRUE, the matrix will be indexed in the row and column by 
+the viable baits exclusively. NB - if this is set to TRUE, then baitAsPrey must 
+also be set to TRUE.
+\end{itemize}
+
 Based on the mathematical or statistical test or the graphical representation desired,
 these parameters should be set accordingly.
 
@@ -186,14 +204,24 @@ bpGraphs <- lapply(bpMats1, function(x){genBPGraph(x, directed=TRUE, bp=FALSE)})
 bpGraphs[1]
 @ 
 
-The \Rfunction{genBPGraph} is a simple function that takes three arguments. The first
-is an adjacency matrix where the rows are indexed by baits and the columns are indexed
-by the preys. The argument \Robject{directed} will create either a directed or an 
-un-directed graph. And lastly, the argument \Robject{bp} is a logical; if TRUE, 
-the adjacency matrix is that of a empirical bait to prey interaction matrix where
-the bait population is not the same as the prey population. Hence, the function 
-will extend the matrix to a larger matrix where the rows and columns are indexed by
-the union of the baits and preys though the bait to prey interactions are 
-preserved.
+The \Rfunction{genBPGraph} is a simple function that takes three arguments:
+
+\begin{itemize}
+\item \Robject{bpMat}: The bait to prey adjacency matrix.
+\item \Robject{directed}: A logical. If TRUE, the function creates a directed
+graph. If FALSE, the function attempts to create an undirected graph if possible.
+\item \Robject{bp}: A logical. If TRUE, the adjacency matrix is that of a empirical 
+bait to prey interaction matrix where the bait population is not the same as the 
+prey population. Hence, the function will extend the matrix to a larger matrix 
+where the rows and columns are indexed by the union of the baits and preys though 
+the bait to prey interactions are preserved.
+\end{itemize}
+
+Depending on the type of analysis, we can represent the bait to prey interation data
+by the sparse matrix (list of list), the adjacency matrix representation, and a graphical
+representation. This vignette only presents enough background on the functions to get
+a working knowledge of the R-package \Rpackage{ppiStats}. We encourage you to use it 
+in concert with other packages such as \Rpackage{Category} or \Rpackage{coCiteStats}
+to garner more methods on the data-sets.
 
 \end{document}
