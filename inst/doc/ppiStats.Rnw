@@ -159,7 +159,7 @@ There will be times, however, when we would like to have the adjacency matrix re
 of our data. When this is necessary, we can build these adjacency matrices by calling the
 R-function \Rfunction{bpMatrix}.
 
-<<>>=
+<<createMats>>=
 bpMats <- lapply(bpList, function(x){
 		bpMatrix(x, symMat = FALSE, homodimer = FALSE, baitAsPrey = FALSE,
     		unWeighted = TRUE, onlyRecip = FALSE, baitsOnly = FALSE)})
