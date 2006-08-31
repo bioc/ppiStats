@@ -1,11 +1,11 @@
 genBPGraph <- function(bpMat, directed=TRUE, bp=TRUE){
 
   bpMat1 <- bpMat
-  b <- rownames(bpMats)
-  p <- colnames(bpMats)
+  b <- rownames(bpMat)
+  p <- colnames(bpMat)
 
   if(!bp){
-    if(b != p){
+    if(sum(b != p) != 0){
       stop("The rownames and the colnames must be identical.")
     }
   }

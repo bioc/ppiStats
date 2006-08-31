@@ -58,9 +58,13 @@ three particular Y2H data-sets: those corresponding to "awasthi-2001-1",
 
 The first function that we will call will be the \Rfunction{collectIntactPPIData}
 function. As the name implies, this function goes into the Intact repository,
-which is exists within this package as a modified XML file, and collects 
-the relevant data given a particular experiment (as given by its IntAct Accession
-(AC) Identification Code).
+which exists within this package as a modified XML file downloaded from
+its primary souce and collects the relevant data given the particular experiments 
+(as given by its IntAct Accession (AC) Identification Code). In our working 
+example ("awasthi-2001-1", "cagney-2001-1", "zhao-2005-2") is identified 
+within IntAct by the AC codes ("EBI-531419", "EBI-698096","EBI-762635"). Before
+we can gather the information concerning any empirical data, we must first 
+identify its AC code.
 
 <<collectData>>=
 
@@ -74,8 +78,8 @@ The return value for the function \Robject{collectIntactPPIData} is a list of
 five elements. The "allBaits" and "allPreys" entries of this list contains the
 IntAct Accession Identification Codes of all the unique proteins that proved to 
 be viable baits (respectively viable preys) over all the experiments for which we
-sought data (in our case, over all three experiments listed by the "shortLabel"
-entry). The "baitsSystematic" and "preysSystematic" entries are named lists; the 
+sought data (in our case, over all three experiments). 
+The "baitsSystematic" and "preysSystematic" entries are named lists; the 
 names corrospond to the IntAct AC codes while the entries are the systematic 
 gene name(s) that each AC code can be mapped to.
 
@@ -97,8 +101,9 @@ As the structure of dataList stands, there is little we can do to manipulate
 the PPI data for mathematical, graphical, or statistical tests. Because of 
 the undesirability of the data as is, we can generate a sparse matrix 
 representation of the bait to prey affiliation data. For such a representation, 
-we call the \Robject{createBPList} function using the entries "indedSetAll",
-"baitsSystematic", and "preysSystematic" of dataList as the arguments.
+we call the \Robject{createBPList} function using the entries "indexSetAll",
+"baitsSystematic", and "preysSystematic" entries of the \Robject{dataList}
+R-object as the arguments for \Robject{createBPList}.
 
 <<createBPList>>=
 
@@ -127,7 +132,11 @@ matrix representation is generally sparse, and so to avoid carring all the zeros
 R-object \Robject{bpList} suffices. 
 
 It will be useful now to mention the two data files in the R-package \Rpackage{ppiStats}, 
-\Robject{y2h} and \Robject{y2hSysGW} are of the same structure as \Robject{bpList}. 
+\Robject{y2h} and \Robject{y2hSysGW} are of the same structure as \Robject{bpList}. Both 
+\Robject{y2h} and \Robject{y2hSysGW} are collections of sparse matrix representations
+for various empirical data-sets: \Robject{y2h} contains 42 Y2H experimental data-sets 
+while \Robject{y2hSysGW} contains 7 Y2H data-sets under the condition that the prey 
+population is genome-wide. Therefore \Robject{y2hSysGW} is a subset of \Robject{y2h}.
 
 There will be times, however, when we would like to have the adjacency matrix representation 
 of our data. When this is necessary, we can build these adjacency matrices by calling the
@@ -141,7 +150,50 @@ bpMats <- lapply(bpList, function(x){
 bpMats[1]	
 @
 
+Other than the sparse matrix representation for the empirical data, there are seven 
+other arguments that the R-function \Rfunction{bpMatrix} takes. We shall discuss these
+parameters in turn. The argument \Robject{homodimer} is a logical parameter; if FALSE,
+all homodimer relationships will be disregarded, otherwise the homodimer relationships
+will be recorded in the adjacency matrix. The argument \Robject{unWeighted} is also a 
+logical; if TRUE, the entries of the adjacency matrix will be binary (0,1) to account
+for the presence or absence of the bait to prey interaction without regards for 
+multiplicity. Next, the argument \Robject{onlyRecip} is also a logical parameter; if
+this argument is set to TRUE, the only interactions that the adjacency matrix will 
+record will be those which are reciprocated, i.e. if protein b detects protein p and
+if protein p detects protein b, these will be the only interactions recorded by the
+the adjacency matrix, and so the matrix will be symmetric. The last three arguments,
+\Robject{symMat}, \Robject{baitAsPrey}, and \Robject{baitsOnly} determines the indexing
+set for the rows and columns of the adjacency matrix. If the \Robject{symMat} is TRUE,
+the the union of viable baits and viable preys will index both the rows and columns;
+this is necessary if we want to create an instance of the class \Rclass{graph}. If
+the argument \Robject{baitAsPrey} is TRUE, then the columns are indexed by the 
+union of viable baits and viable preys while the rows are indexed by only the viable
+baits. Lastly, if the argument \Robject{baitsOnly} is TRUE, then the matrix will be
+indexed by the viable baits in both the row and the columns of the adjacency matrix.
+Based on the mathematical or statistical test or the graphical representation desired,
+these parameters should be set accordingly.
 
+Once we have generated the adjacency matrix, we can create an instance of the class
+\Rclass{graph} by calling the \Rfunction{genBPGraph} function.  
 
+<<>>=
+bpMats1 <- lapply(bpList, function(x){
+		bpMatrix(x, symMat = TRUE, homodimer = FALSE, baitAsPrey = FALSE,
+    		unWeighted = TRUE, onlyRecip = FALSE, baitsOnly = FALSE)})
+bpMats1[1]
+
+bpGraphs <- lapply(bpMats1, function(x){genBPGraph(x, directed=TRUE, bp=FALSE)})
+bpGraphs[1]
+@ 
+
+The \Rfunction{genBPGraph} is a simple function that takes three arguments. The first
+is an adjacency matrix where the rows are indexed by baits and the columns are indexed
+by the preys. The argument \Robject{directed} will create either a directed or an 
+un-directed graph. And lastly, the argument \Robject{bp} is a logical; if TRUE, 
+the adjacency matrix is that of a empirical bait to prey interaction matrix where
+the bait population is not the same as the prey population. Hence, the function 
+will extend the matrix to a larger matrix where the rows and columns are indexed by
+the union of the baits and preys though the bait to prey interactions are 
+preserved.
 
 \end{document}
