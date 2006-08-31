@@ -8,7 +8,7 @@
   prey adjacency matrix. 
 }
 \usage{
-bpMatrix(y2h, symMat = TRUE, homodimer = FALSE, baitAsPrey = FALSE
+bpMatrix(y2h, symMat = TRUE, homodimer = FALSE, baitAsPrey = FALSE, 
 	      unWeighted=TRUE, onlyRecip=FALSE, baitsOnly=FALSE)
 }
 
