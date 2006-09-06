@@ -2,14 +2,14 @@ buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC", pvalueCut=0.001
 
 goTerm2html <- function(GOID, title, othernames, table.head,
        	                table.center = TRUE, compSize = NULL, direction=direc,
-               	        Ont = Onto, pop = pop, uni = uni){
+               	        Ont = Onto, population = pop, universe = uni){
   	gt <- as.list(GOTERM)
     	goClass <- gt[GOID]	
 	    linkName <- sapply(goClass, function(x) x@Term)
 	    linkName <- mapply(function(x,y) paste(x,"-",y, sep=" "), GOID, linkName)
 	
 	    urlVect <- sapply(GOID, function(x) {paste("http://www.ebi.ac.uk/ego/DisplayGoTerm?id=", x, sep="")})
-	    filename <- paste(title, Ont, direction,pop,uni, ".html", sep="")
+	    filename <- paste(title, Ont, direction,population,universe, ".html", sep="")
     	outfile <- file(filename, "w")
     	type <- "text/css"
 	    cat("<html>", "<head>", "<TITLE>GO Hypergeometric Test</TITLE>",
