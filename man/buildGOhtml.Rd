@@ -21,6 +21,8 @@ buildGOhtml(hgTestOutPut, direc = "Over", Onto = "CC")
 	is testing over or under representation.}
   \item{Onto}{A character. Describes which ontology was used
 	in the hyper-geometric test.}
+  \item{pvalueCut}{The p-value cutoff. If the GO terms have p-values less
+	than this, we shall incorporate them into our file.}
 }
 
 \value{

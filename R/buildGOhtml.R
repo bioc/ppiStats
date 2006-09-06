@@ -1,4 +1,4 @@
-buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC"){
+buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC", pvalueCut=0.001){
 
 goTerm2html <- function(GOID, title, othernames, table.head,
        	                table.center = TRUE, compSize = NULL, direction="Under",
@@ -43,7 +43,7 @@ goTerm2html <- function(GOID, title, othernames, table.head,
 }
 
 
-mapply(function(x,y) {gT=names(which(pvalues(y)>.001));
+mapply(function(x,y) {gT=names(which(pvalues(y)>pvalueCut));
                   goTerm2html(GOID=gT, title=x, direction=direc,
                               Ont=Onto)},names(hgTestOutPut),hgTestOutPut)
 
