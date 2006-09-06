@@ -11,11 +11,6 @@ estErrProbMethodOfMoments = function(nint, nrec, nunr, ntot) {
   c = nint + delta^2/(4*n2) - nint/n2*nnon
   discr  = b*b-4*a*c
 
-  ## just to double-check:
-  discr2 = -delta^2*nint/n2 + 4*nint*(nrec-nint+nint*nnon/n2)
-  ## plot(discr, discr2)
-  stopifnot(all(abs(discr-discr2)/abs(discr+discr2+1e-10)<1e-10))
-
   p1 = (-b + sqrt(discr)) / (2*a)
   p2 = (-b - sqrt(discr)) / (2*a)
 
