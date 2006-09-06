@@ -1,15 +1,15 @@
-buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC", pvalueCut=0.001){
+buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC", pvalueCut=0.001, pop="Universe", uni = "Universe"){
 
 goTerm2html <- function(GOID, title, othernames, table.head,
        	                table.center = TRUE, compSize = NULL, direction=direc,
-               	        Ont = Onto){
+               	        Ont = Onto, pop = pop, uni = uni){
   	gt <- as.list(GOTERM)
     	goClass <- gt[GOID]	
 	    linkName <- sapply(goClass, function(x) x@Term)
 	    linkName <- mapply(function(x,y) paste(x,"-",y, sep=" "), GOID, linkName)
 	
 	    urlVect <- sapply(GOID, function(x) {paste("http://www.ebi.ac.uk/ego/DisplayGoTerm?id=", x, sep="")})
-	    filename <- paste(title, Ont, direction, ".html", sep="")
+	    filename <- paste(title, Ont, direction,pop,uni, ".html", sep="")
     	outfile <- file(filename, "w")
     	type <- "text/css"
 	    cat("<html>", "<head>", "<TITLE>GO Hypergeometric Test</TITLE>",
@@ -18,7 +18,7 @@ goTerm2html <- function(GOID, title, othernames, table.head,
         paste("<style type=", type,">",sep = ""), "p{ margin-top: 1px; margin-bottom: 1px; padding-left: 10px; text-indent: -10px }",
         "</style>", file = outfile, sep = "\n")
     if (!missing(title)){
-        title <- paste(title, "-", Ont, ": ", direction, sep="")
+        title <- paste(title, Ont, ": ", pop, "/", uni, "-", direction, sep="")
         cat("<CENTER><H1 ALIGN=\"CENTER\">", title, " </H1></CENTER>\n",
             file = outfile, sep = "\n")}
     if (table.center)

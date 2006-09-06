@@ -1,3 +1,4 @@
+
 \name{buildGOhtml}
 \alias{buildGOhtml}
 
@@ -23,6 +24,10 @@ buildGOhtml(hgTestOutPut, direc = "Over", Onto = "CC")
 	in the hyper-geometric test.}
   \item{pvalueCut}{The p-value cutoff. If the GO terms have p-values less
 	than this, we shall incorporate them into our file.}
+  \item{pop}{A character. It should be a descriptive term signalling
+	the gene population tested.}
+  \item{uni}{A character. It should be a descriptive term signalling
+	the gene universe tested against.}
 }
 
 \value{
