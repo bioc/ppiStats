@@ -1,16 +1,7 @@
-buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC", pvalueCut=0.001, pop="Universe", uni = "Universe"){
+buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC", pvalueCut=0.001, pop="Universe", uni = "Universe", title = "scratch"){
 
-goTerm2html <- function(GOID, title, othernames, table.head,
-       	                table.center = TRUE, compSize = NULL, direction=direc,
-               	        Ont = Onto, population = pop, universe = uni){
-  	gt <- as.list(GOTERM)
-    	goClass <- gt[GOID]	
-	    linkName <- sapply(goClass, function(x) x@Term)
-	    linkName <- mapply(function(x,y) paste(x,"-",y, sep=" "), GOID, linkName)
-	
-	    urlVect <- sapply(GOID, function(x) {paste("http://www.ebi.ac.uk/ego/DisplayGoTerm?id=", x, sep="")})
-	    filename <- paste(title, Ont, direction,population,universe, ".html", sep="")
-    	outfile <- file(filename, "w")
+    filename <- paste(title, Onto, direc,pop,uni, ".html", sep="")
+    outfile <- file(filename, "w")
     	type <- "text/css"
 	    cat("<html>", "<head>", "<TITLE>GO Hypergeometric Test</TITLE>",
         "</head>", "<body bgcolor=#FFFFFF >", "<H1 ALIGN=CENTER >GO Hypergeometic Test</H1>",
@@ -23,6 +14,21 @@ goTerm2html <- function(GOID, title, othernames, table.head,
             file = outfile, sep = "\n")}
     if (table.center)
       cat("<CENTER> \n", file = outfile)
+
+
+goTerm2html <- function(GOID, title, othernames, table.head,
+       	                table.center = TRUE, compSize = NULL, direction=direc,
+               	        Ont = Onto, population = pop, universe = uni){
+  	gt <- as.list(GOTERM)
+    	goClass <- gt[GOID]	
+	    linkName <- sapply(goClass, function(x) x@Term)
+	    linkName <- mapply(function(x,y) paste(x,"-",y, sep=" "), GOID, linkName)
+	
+	    urlVect <- sapply(GOID, function(x) {paste("http://www.ebi.ac.uk/ego/DisplayGoTerm?id=", x, sep="")})
+
+    	
+     
+    
     cat("<TABLE BORDER=4>", file = outfile, sep = "\n")
     if (!missing(table.head)) {
         headout <- paste("<TH>", table.head, "</TH>")
@@ -43,8 +49,14 @@ goTerm2html <- function(GOID, title, othernames, table.head,
 }
 
 
-mapply(function(x,y) {gT=names(which(pvalues(y)>pvalueCut));
-                  goTerm2html(GOID=gT, title=x, direction=direc,
-                              Ont=Onto)},names(hgTestOutPut),hgTestOutPut)
+
+somefunc <- function(z){
+
+	mapply(function(x,y) {gT=names(which(pvalues(y)>pvalueCut));
+        	          goTerm2html(GOID=gT, title=x, direction=direc,
+                	              Ont=Onto)},names(z),z)
+}
+
+lapply(hgTestOutPut, function(z) somefunc(z))
 
 }
