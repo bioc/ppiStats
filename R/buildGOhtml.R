@@ -25,12 +25,12 @@ buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC", pvalueCut=0.001
         
  	GOID <- sort(GOID)
     	goClass <- gt[GOID]
-	numGenes <- sapply(GOID, function(x) length(yG2P[[x]]))
+	#numGenes <- sapply(GOID, function(x) length(yG2P[[x]]))
         linkName <- sapply(goClass, function(x) x@Term)
         goDef <- sapply(goClass, function(x) x@Definition)
         print(length(goDef))
         print(length(linkName))
-        linkName <- mapply(function(x,y,q) paste(x,":",y, "-", "Number of Genes annotated:", q,  sep=" "), GOID, linkName, numGenes)
+        linkName <- mapply(function(x,y,q) paste(x,":",y, "-", "Number of Genes annotated:", q,  sep=" "), GOID, linkName)
 	
         urlVect <- sapply(GOID, function(x) {paste("http://www.ebi.ac.uk/ego/DisplayGoTerm?id=", x, sep="")})
         
@@ -46,7 +46,7 @@ buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC", pvalueCut=0.001
         ##Here is where the url should go:
         
         for ( i in 1:length(urlVect)){
-            cat("<TR> ", "<TD> ", "<a href =", urlVect[i], " onmouseover=", "\"return escape('",goDef[i],"')\"", "> ", linkName[i], " </a>", " </TD>", " </TR>"," \n",  file=outfile, sep = "")
+            cat("<TR> ", "<TD> ", "<a href =", urlVect[i], " onmouseover=", "\"return escape('","blah blah blah","')\"", "> ", linkName[i], " </a>", " </TD>", " </TR>"," \n",  file=outfile, sep = "")
         }
         
         cat("</TABLE>", file = outfile)
