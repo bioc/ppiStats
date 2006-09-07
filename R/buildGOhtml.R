@@ -30,7 +30,7 @@ buildGOhtml <- function(hgTestOutPut, direc = "Over", Onto="CC", pvalueCut=0.001
         goDef <- sapply(goClass, function(x) x@Definition)
         print(length(goDef))
         print(length(linkName))
-        linkName <- mapply(function(x,y,q) paste(x,":",y, "-", "Number of Genes annotated:", q,  sep=" "), GOID, linkName)
+        linkName <- mapply(function(x,y) paste(x,":",y,  sep=" "), GOID, linkName)
 	
         urlVect <- sapply(GOID, function(x) {paste("http://www.ebi.ac.uk/ego/DisplayGoTerm?id=", x, sep="")})
         
