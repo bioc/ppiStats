@@ -11,23 +11,27 @@ file showing the GO terms which are either
 over or under represented.
 }
 \usage{
-buildGOhtml(hgTestOutPut, direc = "Over", Onto = "CC")
+buildGOhtml(hgTestOutPut, direc = "Over", Onto = "CC", pvalueCut=0.001,
+pop="Universe", uni="Universe", title="scratch", table.center=TRUE)
 }
 
 \arguments{
   \item{hgTestOutPut}{A name list. Each entry in the list is 
-	an output from the function goHyperGeoTest of the 
-	GOstats package.}
+    an output from the function goHyperGeoTest of the 
+    GOstats package.}
   \item{direc}{A character. Tells whether the geometric test
-	is testing over or under representation.}
+    is testing over or under representation.}
   \item{Onto}{A character. Describes which ontology was used
-	in the hyper-geometric test.}
+    in the hyper-geometric test.}
   \item{pvalueCut}{The p-value cutoff. If the GO terms have p-values less
-	than this, we shall incorporate them into our file.}
+    than this, we shall incorporate them into our file.}
   \item{pop}{A character. It should be a descriptive term signalling
-	the gene population tested.}
+    the gene population tested.}
   \item{uni}{A character. It should be a descriptive term signalling
-	the gene universe tested against.}
+    the gene universe tested against.}
+  \item{title}{A character. The tile of the .html page}
+  \item{table.center}{A logical. Should we center the tables generated.}
+  
 }
 
 \value{

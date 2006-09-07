@@ -100,26 +100,7 @@ map2Systematic <- function(allProt, tableList, sWAC){
                         }
                     }
 
-                                        #tryUniProt <- which(subTable[,"db"] == "uniprotkb")
-                    #ac2UniCode <- split(subTable[tryUniProt,4], subTable[tryUniProt,1])
-                    #ac2UniCode <- lapply(ac2UniCode, unique)
-                    #uniC1 <- unique(unlist(ac2UniCode))
-                    #uniC <- map2Systematic2(uniC1, tableList, sWAC)
-                    #protSystematic[i] <- yeast2Sys[[uniC]][1]
-                    #one2Many[[i]] <- yeast2Sys[[uniC]]
-                                        #uniC <- strsplit(uniC1, "_yeast", fixed=TRUE)
-                    #uniC <- toupper(unique(unlist(uniC)))
-                    #print(yeast2Sys[[uniC]][1])
-                    #print(uniC)
-                    #if (!is.null(yeast2Sys[[uniC]])){
-                    #    protSystematic[i] <- yeast2Sys[[uniC]][1]
-                        
-                        
-                    #    one2Many[[i]] <- yeast2Sys[[uniC]]
-                        
-                    #}
 
-                    #else()
                     
                 }
 
