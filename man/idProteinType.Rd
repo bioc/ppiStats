@@ -37,6 +37,7 @@ idHomodimers(bpGraph)
 
 \author{T Chiang}
 \examples{
+library(ppiData)
 idViableProteins(Ito2001BPGraph)
 idHomodimers(Ito2001BPGraph)
 }

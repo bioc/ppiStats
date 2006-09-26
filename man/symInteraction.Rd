@@ -33,6 +33,7 @@ symInteraction(y2h)
 
 \author{T Chiang}
 \examples{
+data(ppiData)
 data(y2hSysGW)
 eg = y2hSysGW[3]
 symInteraction(eg)

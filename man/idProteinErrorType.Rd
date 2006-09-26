@@ -37,6 +37,7 @@ c(1e-06, 1e-04, 0.01))
 \author{T Chiang}
 
 \examples{
+library(ppiData)
 idSystematic(Ito2001BPGraph, viableBaits[[1]], bpGraph=TRUE)
 }
 \keyword{datagen}

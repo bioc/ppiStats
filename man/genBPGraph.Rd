@@ -36,8 +36,9 @@ genBPGraph(bpMat, directed=TRUE, bp=TRUE)
 
 
 \examples{
+library(ppiData)
 data(y2hSysGW)
 eg=y2hSysGW[3]
-genBGGraph(eg)
+genBPGraph(eg)
 }
 \keyword{datagen}
