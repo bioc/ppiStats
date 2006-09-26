@@ -16,12 +16,6 @@ bpMatrix <- function(y2h, symMat = TRUE, homodimer=FALSE, baitAsPrey = FALSE,
   }
 
   
-  if(onlyRecip){
-    y2h <- symInteraction(y2h)
-    ##This will give a symmetric matrix, i.e. only those interactions
-    ##where reciprocity was seen is given by the matrix.
-  }
-  
   
   baits <- unique(names(y2h))
   preys <- unique(unlist(y2h))
@@ -55,13 +49,24 @@ bpMatrix <- function(y2h, symMat = TRUE, homodimer=FALSE, baitAsPrey = FALSE,
     }
     
   }
-    
+
+
+  if(onlyRecip){
+      bpMat <- (bpMat * t(bpMat))
+      ##This will give a symmetric matrix, i.e. only those interactions
+      ##where reciprocity was seen is given by the matrix.
+  }
+  
+
+  
   if(!homodimer){diag(bpMat)=0}
   if(unWeighted){
     mode(bpMat) = "logical"
     mode(bpMat) = "numeric"
   }
 
+
+  
   if(baitsOnly){
     bpMat <- bpMat[,rownames(bpMat), drop=FALSE]
   }
