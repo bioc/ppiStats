@@ -1,13 +1,17 @@
-calcInOutDegStats <- function(graphObj)
+calcInOutDegStats <- function(graphObj, homodimer=FALSE)
 {
-  deg <- degree(graphObj)
-  inMinusOut <- deg$inDegree - deg$outDegree
-  outMinusIn <- deg$outDegree - deg$inDegree
+  #deg <- degree(graphObj)
+  #inMinusOut <- deg$inDegree - deg$outDegree
+  #outMinusIn <- deg$outDegree - deg$inDegree
 
   gAM <- as(graphObj, "graphAM")
 
   adjMat <- gAM@adjMat
-
+  if(!homodimer) diag(adjMat) <- 0
+  
+  inMinusOut <- colSums(adjMat) - rowSums(adjMat)
+  outMinusIn <- rowSums(adjMat) - colSums(adjMat)
+  
   recip <- adjMat*t(adjMat)
   recipIn <- colSums(recip)
   recipOut <- rowSums(recip)
