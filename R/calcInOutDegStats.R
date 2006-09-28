@@ -8,7 +8,9 @@ calcInOutDegStats <- function(graphObj, homodimer=FALSE)
 
   adjMat <- gAM@adjMat
   if(!homodimer) diag(adjMat) <- 0
-  
+
+  inDegree <- colSums(adjMat)
+  outDegree <- rowSums(adjMat)
   inMinusOut <- colSums(adjMat) - rowSums(adjMat)
   outMinusIn <- rowSums(adjMat) - colSums(adjMat)
   
@@ -19,11 +21,11 @@ calcInOutDegStats <- function(graphObj, homodimer=FALSE)
   unrecipIn <- colSums(unrecip)
   unrecipOut <- rowSums(unrecip)
   names(unrecipOut) <- names(unrecipIn)
-  totalUnrecip <- sum(unrecip)
+  totalUnrecip <- sum(unrecip)/2
   
   degStat <- list()
-  degStat$inDegree <- deg$inDegree
-  degStat$outDegree <- deg$outDegree
+  degStat$inDegree <- inDegree
+  degStat$outDegree <- outDegree
   degStat$inDegreeMinusOutDegree <- inMinusOut
   degStat$outDegreeMinusInDegree <- outMinusIn
   #degStat$unrecip <- unrecip
