@@ -9,6 +9,8 @@ calcInOutDegStats <- function(graphObj, homodimer=FALSE)
   adjMat <- gAM@adjMat
   if(!homodimer) diag(adjMat) <- 0
 
+  rownames(adjMat) <- colnames(adjMat)
+  
   inDegree <- colSums(adjMat)
   outDegree <- rowSums(adjMat)
   inMinusOut <- colSums(adjMat) - rowSums(adjMat)
