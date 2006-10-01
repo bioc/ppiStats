@@ -8,12 +8,14 @@ Protein-Protein Interaction (PPI) Graph}
 	statistics for which further analysis can be made.
 }
 \usage{
-calcInOutDegStats(graphObj)
+calcInOutDegStats(graphObj, homodimer=FALSE)
 }
 
 \arguments{
   \item{graphObj}{The argument \code{graphObj} is an instance of the 
-            class graphNEL.}
+    class graphNEL.}
+  \item{homodimer}{A logical. If FALSE, the function removes all
+    homodimer relationships. It retains them otherwise.}
 }
 \value{
 The return value is a list of various degree statistics of the PPI directed
