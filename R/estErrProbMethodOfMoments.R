@@ -1,20 +1,20 @@
-estErrProbMethodOfMoments = function(nint, nrec, nunr, ntot) {
-  nEdges = ntot*(ntot+1)/2
-  stopifnot(length(nrec)==1, length(nunr)==1, length(ntot)==1, 
-    nrec+nunr<=nEdges, all(nint<=nEdges))
+estErrProbMethodOfMoments = function(n1, x1, x2, ntot) {
+  nEdges = ntot*(ntot-1)
+  stopifnot(length(x1)==1, length(x2)==1, length(ntot)==1, 
+    x1+x2<=nEdges, all(n1<=nEdges))
 
-  nnon = nEdges-nrec-nunr
-  n2 = nEdges-nint
-  delta = (nnon-n2) - (nrec-nint)
+  nnon = nEdges-x1-x2
+  n2 = nEdges-n1
+  delta = (nnon-n2) - (x1-n1)
   a = nEdges
-  b = delta - 2*nint
-  c = nint + delta^2/(4*n2) - nint/n2*nnon
+  b = delta - 2*n1
+  c = n1 + delta^2/(4*n2) - n1/n2*nnon
   discr  = b*b-4*a*c
 
   p1 = (-b + sqrt(discr)) / (2*a)
   p2 = (-b - sqrt(discr)) / (2*a)
 
-  q = function(p) ((nnon-n2)-(nrec-nint)+2*n2*p)/(2*nint)
-  cbind(nint=nint, pfp1=p1, pfn1=q(p1), pfp2=p2, pfn2=q(p2))
+  Pfn = function(p) ((nnon-n2)-(x1-n1)+2*n2*p)/(2*n1)
+  cbind(n1=n1, pfp1=p1, pfn1=Pfn(p1), pfp2=p2, pfn2=Pfn(p2))
 }
 
