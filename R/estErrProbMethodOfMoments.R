@@ -1,5 +1,6 @@
 estErrProbMethodOfMoments = function(nint, nrec, nunr, ntot) {
-  nEdges = ntot*(ntot+1)/2
+  ##nEdges will count the total number of possible edges modulo homomers
+  nEdges = ntot*(ntot-1)/2
   stopifnot(length(nrec)==1, length(nunr)==1, length(ntot)==1, 
     nrec+nunr<=nEdges, all(nint<=nEdges))
 
