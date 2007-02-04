@@ -87,7 +87,7 @@ the exploratory data analysis.
 \end{abstract}
 
 
-\section*{Obtaining the PPI Data}
+\section{Obtaining the PPI Data}
 We begin by detailing the methods by which we obtained the 12 protein 
 interaction datasets. We wanted data that had two properties: the 
 bait/prey relationship is preserved and 2. that the prey population 
@@ -120,9 +120,10 @@ the identity of the proteins are given by the Open Reading Frames
 unavailable, either the protein common name or another identifier
 (IntAct acension code, SwissProt ID, etc) is used. 
 
-<<ppiData, echo=FALSE>>=
+<<ppiData, echo=TRUE>>=
 data("bpExperimentNames")
 bpExperimentNames
+get(bpExperimentNames[8])
 @ 
 
 In addition to \Rpackage{ppiData}, another R-data package, 
@@ -140,7 +141,7 @@ library("ppiStats")
 data(proteinProperties)
 @ 
 
-\section*{Sampling}
+\section{Sampling}
 We addressed the issue of sampling initially by the viable bait 
 and viable prey population observed in the experimental datasets.
 From the directed graphs, we created the two lists 
@@ -154,6 +155,62 @@ ascertain the viable bait/prey (VBP) populations.
 <<vbp, echo=FALSE, results=hide>>=
 vbp <- mapply(function(x,y) intersect(x,y), viableBaits, viablePrey)
 @  
+
+<<twoBytwo, echo=FALSE, results=hide>>=
+
+vbpGraph <- mapply(function(x,y){subGraph(x, get(y))},vbp,bpExperimentNames)
+
+vbpStochastic <- lapply(vbpGraph, function(x) {if(length(nodes(x))!=0) 
+                                                 idStochastic(x, bpGraph=TRUE)})
+vbpSystematic <- mapply(function(x,y){setdiff(nodes(x),y)},
+                        vbpGraph,vbpStochastic)
+exp1 <- vbp[[11]]
+exp2 <- vbp[[12]]
+x <- intersect(exp1, exp2)
+y <- matrix(0, nrow=length(x), ncol=2)
+rownames(y) <- x
+colnames(y) <- c("Gavin06","Krogan06")
+y1 <- y
+y2 <- y
+
+dG <- calcInOutDegStats(vbpGraph[[11]])
+dK <- calcInOutDegStats(vbpGraph[[12]])
+
+gavLargeSysIn <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[[11]]] > 0))
+gavLargeSysOut <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[[11]]] < 0))
+
+kroLargeSysIn <- names(which((dK$inDegreeMinusOutDegree)[vbpSystematic[[12]]] > 0))
+kroLargeSysOut <- names(which((dK$inDegreeMinusOutDegree)[vbpSystematic[[12]]] < 0))
+
+indexG <- x %in% vbpSystematic[[11]]
+indexK <- x %in% vbpSystematic[[12]]
+indexG1 <- x %in% gavLargeSysIn
+indexK1 <- x %in% kroLargeSysIn
+indexG2 <- x %in% gavLargeSysOut
+indexK2 <- x %in% kroLargeSysOut
+
+y[indexG, 1] <- 1
+y[indexK, 2] <- 1
+z <- data.frame(y)
+
+y1[indexG1, 1] <- 1
+y1[indexK1, 2] <- 1
+z1 <- data.frame(y1)
+
+y2[indexG2, 1] <- 1
+y2[indexK2, 2] <- 1
+z2 <- data.frame(y2)
+
+tab <- table(z$Gavin06, z$Krogan06)
+ft <- fisher.test(tab)
+
+tab1 <- table(z1$Gavin06, z1$Krogan06)
+ft1 <- fisher.test(tab1)
+
+tab2 <- table(z2$Gavin06, z2$Krogan06)
+ft2 <- fisher.test(tab2)
+
+@ 
 
 From SGD, we used 6466 as the number of known and characterized 
 yeast ORFs. This allowed us to build bar charts to gauge the
@@ -173,12 +230,12 @@ representation of Gene Ontology. Using the R software packages
 \Rpackage{Category} and \Rpackage{GOstats}, we were able
 to asses these questions. The code used to test for over and
 under representation is a separate entity. It has been bundled 
-with the supplementary materials but can also be found in 
-the R packge \Rpackage{ppiStats}.
+with the supplementary materials but can also be found within 
+the inst/Scripts/ directory of the R packge \Rpackage{ppiStats}.
 
-\section*{Systematic Bias}
+\section{Systematic Bias}
 %--------------------------------------------------
-\subsection*{Probability model}
+\subsection{Probability model}
 %--------------------------------------------------
 For a protein $\rho$ from VBP, we want to construct a 
 probability model for the joint distribution of  
@@ -209,7 +266,7 @@ The decomposition of $P$ in the right hand side will be useful.
 
 For convenience, we suppress the index $\rho$ in our notation, but please
 keep in mind that the parameter $\delta^*\equiv \delta_{\rho}^*$ depends on
-$k$, and that $N_{R}$, $N_{I}$, $N_{O}$
+$\rho$, and that $N_{R}$, $N_{I}$, $N_{O}$
 and $N_{U}$ are random variables that depend on $\rho$.
 $N$ is an experiment-wide parameter, and we also consider 
 $\pfp$ and $\pfn$ to be experiment-wide; although some
@@ -221,7 +278,7 @@ the data for a particular protein does not concur well with these
 assumptions, we will consider it subject to systematic error.
 
 %--------------------------------------------------
-\subsubsection*{Symmetry}
+\subsubsection{Symmetry}
 %--------------------------------------------------
 The first assumption is that of symmetry, that is, equality of
 the distributions of $N_{I}$ and $N_{O}$.
@@ -238,7 +295,7 @@ The remarkable thing is that it depends on $n_u$, but not on any of
 the parameters! Now for the second term:
 
 %--------------------------------------------------
-\subsubsection*{Decomposition}
+\subsubsection{Decomposition}
 %--------------------------------------------------
 We can decompose $N_{R}$ and
 $N_{U}$ into those counts that originate from
@@ -259,24 +316,24 @@ N_{U}^f &\sim& \mbox{B}(N-\delta^*-1, \, 2\pfp(1-\pfp))
 The ones that originate from a real interaction follow a multinomial
 distribution
 \begin{eqnarray}
-\lefteqn{P(N_{R}^v   = n_{R}^v, \,
-           N_{U}^v = n_{U}^v \, | \, \Theta)} \nonumber\\ 
-&=&    (1-p)^{2n_{R}^v} \cdot 
-\left(2p(1-p)\right)^{n_{U}^v} \cdot 
+\lefteqn{P(N_{R}^v   = n_{r}^v, \,
+           N_{U}^v = n_{u}^v \, | \, \Theta)} \nonumber\\ 
+&=&    (1-p)^{2n_{r}^v} \cdot 
+\left(2p(1-p)\right)^{n_{u}^v} \cdot 
            p^{2n_{\mbs{none}}^v} \cdot 
-  \frac{\delta^*!}{n_{R}^v! n_{U}^v! n_{\mbs{none}}^v!} \label{eq:multinomial}
+  \frac{\delta^*!}{n_{r}^v! n_{u}^v! n_{\mbs{none}}^v!} \label{eq:multinomial}
 \end{eqnarray}
 where for notational convenience I used the abbreviations
-$n_{\mbs{none}}^v=\delta^* - n_{R}^v - n_{U}^v$ 
+$n_{\mbs{none}}^v=\delta^* - n_{r}^v - n_{u}^v$ 
 and $p\equiv \pfn$.
 
 The density function of the second term on the RHS of~\eqref{eq:prob}
 can then be obtained by convolution of \eqref{eq:fps} and
 \eqref{eq:multinomial}. For each value of the parameters
-$\Theta\equiv(\ntot, \delta^*, \pfp, \pfn)$, this is a 2D
+$\Theta\equiv(N, \delta^*, \pfp, \pfn)$, this is a 2D
 matrix with infinite numbers of rows and columns, corresponding to
-$n_{R}$ and $n_{U}$. However, most of the
-probability mass is concentrated within a bounded range.  Furthermore,
+$n_{r}$ and $n_{u}$. Most of the probability mass, however, is 
+concentrated within a bounded range.  Furthermore,
 we will restrict our attention to values of $\delta^*$ between 0 and
 $\delta^*_{\mbs{max}}$, depending on the data set.  This is
 implemented in the function \Rfunction{nullDistDoublyTestedEdges} in
@@ -337,7 +394,7 @@ getDegrees = function(m) {
 @ 
 
 %----------------------------------------
-\subsubsection*{Using in/out asymmetry to identify baits that are likely
+\subsubsection{Using in/out asymmetry to identify baits that are likely
   to be subject to systematic errors}\label{sec:inout}
 %----------------------------------------
 We now use Equation~\eqref{eq:symm} to assign a $p$-value
@@ -353,10 +410,10 @@ P(\mbox{min}\{ N_{I}, N_{O} \} \le  \mbox{min}\{ n_{i}, n_{o} \} ) \nonumber\\
 \end{eqnarray}
 %
 
-This is computed by the following function \Rfunction{assessSymmetry},
-given a bait/prey interaction (adjacency) matrix \Robject{m}. In addition,
+This is computed by the following function \Rfunction{assessSymmetry} which
+is also contained in the R package \Rpackage{ppiStats}. In addition,
 the function also calculates the contours of the function 
-$p$ in the $(n_{I}, n_{O})$-plane. These will be used in the plots.
+$p$ in the $(n_{i}, n_{o})$-plane. These will be used in the plots.
 
 <<assessSymmetry, echo=FALSE, results=hide>>=
 ## pLevels = c(1e-6, 1e-4, 1e-2)
@@ -412,8 +469,9 @@ scpFun = function(f, what) {
 
 %
 Now we are ready to apply the symmetry $p$-values, and we will create
-a reduced set of data \Robject{bpRed} that contains only proteins with
-$p$-values larger than or equal to p-value threshold of $10^{-2}$.
+an environment, \Robject{bpRed} containing the reduced set of data 
+with only proteins with $p$-values larger than or equal to p-value 
+threshold of $10^{-2}$.
 %
 
 <<pThresh, echo=FALSE, results=hide>>=
@@ -461,12 +519,12 @@ close(out)
 
 \include{unrecipInOutDistribIncludes}
 
-\subsection*{Logistic Regressions}
+\subsection{Logistic Regressions}
 
 For a protein with $n_{i}$ unreciprocated in-edges and $n_{o}$
 unreciprocated out-edges, we expect
 \[
-n_{i} ~|~ n_{u} ~~~ \sim \mathcal{B}\left( n_{i} + n_{o}, 
+n_{i} ~|~ n_{u} ~~~ \sim \mathcal{B}\left( n_{u}, 
   \frac{1}{2} \right)
 \]
 if false positive and false negative errors are independent of a
@@ -477,8 +535,8 @@ protein's properties.  Let $p$ be the true probability ($H_0: p =
   \frac{1}{2}$ for
   each protein (in each experiment)
 \item Use test outcomes as responses to fit logistic regressions with
-  abundance as predictor \footnote{We actually use logarithm (base 2)
-    of abundance as predictor since that has a much more symmetric
+  abundance and CAI as predictor \footnote{We actually use logarithm (base 2)
+    of abundance and CAI as predictor since that has a much more symmetric
     distribution.}.
 \end{itemize}
 Regression is restricted to the subgraph of proteins that are VBP.
@@ -595,7 +653,7 @@ logisticTests <-
 
 \newpage
 
-\subsection*{Results: log(abundance) as predictor}
+\subsection{Results: log(abundance) as predictor}
 
 <<calc,echo=FALSE,results=hide,cache=TRUE>>=
 
@@ -642,7 +700,7 @@ do.call(rbind,
 
 \newpage
 
-\subsection*{Results: log(CAI) as predictor}
+\subsection{Results: log(CAI) as predictor}
 
 
 
@@ -673,7 +731,7 @@ do.call(rbind,
 ##
 @ 
 
-\subsection*{Fisher's Exact Test Across Experiment}
+\subsection{Fisher's Exact Test Across Experiment}
 
 Next we wanted to ascertain if the protein subset that was affected by 
 a systematic bias in one experiment is related to the protein subset 
@@ -681,17 +739,31 @@ affected by a systematic bias of another experiment. To investigate this
 relationship, we created three $2 \times 2$ tables. Only two datasets 
 \cite{Gavin2006, Krogan2006} contained sufficient data points for this 
 analysis. The $2 \times 2$ tables were created where the overall 
-universe is VBP$_{C} = $ VBP$_{\mbs{Gavin2006}} \cap$ VBP$_{\mbs{Krogan2006}}$.
+universe is VBP$_{C} = $ VBP$_{\mbs{G}} \mbox{ } \cap$ VBP$_{\mbs{K}}$.
 \cite{Gavin2006} index the rows; \cite{Krogan2006}, the columns. 
-Each entry of the table is given by $(i,j) : i,j \in \{1,2\}$. 
+In the $(1,1)$-entry of each table, we count the number of common 
+proteins affected by a bias in both experiments; in $(1,2)$-entry,
+we count the number affected in \cite{Gavin2006} but not in 
+\cite{Krogan2006}; in $(2,1)$, the number in \cite{Krogan2006} not 
+in \cite{Gavin2006}; and in $(2,2)$, the number not affected in both.
+Hence we get the three tables:
 
-
-<<twoBytwo>>=
-
-
+<<print2by2>>=
+tab
+tab1
+tab2
 @ 
-\subsection*{Unreciprocated Degree Statistics}
-The binomial model derived in ~\ref{sec:inout} allows us to determine
+
+We can use these three tables as the parameters for Fisher's Exact 
+test (again a hypergeometric test), and see the results:
+
+<<printFishers>>=
+ft
+ft1
+ft2
+@ 
+\subsection{Unreciprocated Degree Statistics}
+Our binomial model allows us to determine
 proteins that might be subject to a systematic bias of the experiment.
 Each statistical test is conducted on a per protein level. In addition
 to these series of statistical test, we can describe experiment-wide
@@ -699,42 +771,39 @@ bias by using the same binomial model for each protein.
 
 For each protein $\rho$ with directed degree $(i_{\rho},o_{\rho})$ and 
 $n_{\rho} = i_{\rho}+o_{\rho}$, 
-we can, without loss of generality, assume that an in-edge represents a 
+we can, without loss of generality, assume that an out-edge represents a 
 success in our binomial model. Therefore, we can standardize this directed 
 degree and compute the \emph{z-score} for each protein:
 
 \begin{eqnarray}
 z_{\rho} &=& \frac{\frac{1}{2}\;n_{\rho} - o_{\rho}}
-{\sqrt{\frac{1}{2}^2;n_{rho}}}\\
+{\sqrt{\left( \frac{1}{2} \right)^2\;n_{\rho}}}\\
     &=& \frac{i_{\rho}-o_{\rho}}{\sqrt{i_{\rho}+o_{\rho}}}
 \end{eqnarray}
 
 After calculating the z-score for each protein within an experiment, we 
-were able to estimate their distributions within each dataset. 
+were able to estimate the distributions within each dataset. 
 
 %--------------------------------------------------
 \section{Estimation of $p$ by the method of moments}
 %--------------------------------------------------
 \subsection{Derivation}  
 %--------------------------------------------------
-The following part is taken from the vignette \textit{solve\_pfp\_pfn.Rnw} 
-that WH wrote in July 2006. Please excuse the slight inconsistency of 
-notation, for now. Given
-\par\vspace*{1ex}
 \begin{tabular}{rp{0.25\textwidth}p{0.65\textwidth}}
-&$\frac{1}{2}\ntot(\ntot-1)$&the total number of interactions (excluding homomers)\\
-$n_1$&&the true number of interactions\\
-$n_2$&$=\frac{1}{2}\ntot(\ntot-1)-n_1$&the true number of non-interactions\\
+
+&$N \choose 2$&The total number of possible interactions (excluding homomers)\\
+$n$&&the true number of interactions\\
+$n^c$&$={N \choose 2}-n$&the true number of non-interactions\\
 $X_1$&&observed number of reciprocated edges\\
 $X_2$&&observed number of non-edges\\
-$X_3$&$=n_1+n_2-X_1-X_2$&observed number of unreciprocated eges
+$X_3$&$=n+n^c-X_1-X_2$&observed number of unreciprocated eges
 \end{tabular}
 \par\vspace*{1ex}
 \noindent we have
 \begin{eqnarray}
-E[X_1] &=& n_1\,(1-\pfn)^2+n_2\,\pfp^2\label{x1}\\
-E[X_2] &=& n_1\,\pfn^2+n_2\,(1-\pfp)^2\label{x2}\\
-E[X_3] &=& 2n_1\,\pfn(1-\pfn)+2n_2\,\pfp(1-\pfp)\label{x3}
+E[X_1] &=& n\,(1-\pfn)^2+n^c\,\pfp^2\label{x1}\\
+E[X_2] &=& n\,\pfn^2+n^c\,(1-\pfp)^2\label{x2}\\
+E[X_3] &=& 2n\,\pfn(1-\pfn)+2n^c\,\pfp(1-\pfp)\label{x3}
 \end{eqnarray}
 
 Only two of the three equations~\eqref{x1}--\eqref{x3} are
@@ -742,41 +811,40 @@ independent, any two of them imply the third.
 Our goal is to estimate $\pfp$, $\pfn$. We can replace the
 expectation values on the left side of
 Equations~\eqref{x1}--\eqref{x3} by the observed sample values $x_1$,
-$x_2$, $x_3$. Since we do not know $n_1$, the above system of two
+$x_2$, $x_3$. Since we do not know $n$, the above system of two
 independent equations for three variables defines a one-dimensional
-solution manifold, and the goal of this vignette is to investigate
-that solution manifold.
+solution manifold.
 
-We will parameterize that manifold by $n_1$ ($0\le n_1\le b$) in
+We will parameterize that manifold by $n$ ($0\le n\le {N \choose 2}$) in
 $(\pfp,\pfn)$-space. Relevant solutions are those for which 
 $0\le \pfp,\pfn \le 1$.
 
-Consider that $n_1$ is given. Let us solve 
+Consider that $n$ is given. Let us solve 
 Equations~\eqref{x1}--\eqref{x3} for $\pfp$ and $\pfn$. First,
 subtracting $\eqref{x4} = \eqref{x1} - \eqref{x2}$, we have
 \begin{eqnarray}
-x_1-x_2&=&n_1\,(1-2\pfn)-n_2\,(1-2\pfp)\label{x4}\\
+x_1-x_2&=&n\,(1-2\pfn)-n^c\,(1-2\pfp)\label{x4}\\
 \Leftrightarrow\quad
-\pfn&=&\frac{1}{2n_1}\left((x_2-n_2)-(x_1-n_1)+2n_2\,\pfp\right)\nonumber\\
-\pfn&=&\frac{1}{2n_1}\left(\Delta+2n_2\,\pfp\right),\label{q}
+\pfn&=&\frac{1}{2n}\left((x_2-n^c)-(x_1-n)+2n^c\,\pfp\right)\nonumber\\
+\pfn&=&\frac{1}{2n}\left(\Delta+2n^c\,\pfp\right),\label{q}
 \end{eqnarray}
-where we have defined $\Delta:= (x_2-n_2)-(x_1-n_1)$ for convenience.
+where we have defined $\Delta:= (x_2-n^c)-(x_1-n)$ for convenience.
 We can plug this expression for $\pfn$ into Equation~\eqref{x2} and obtain
 \begin{equation}
-\underbrace{\left(n_1+n_2\right)}_{=:a} \pfp^2 + 
-\underbrace{\left(\Delta-2n_1\right)}_{=:b} \pfp + 
-\underbrace{n_1+\frac{\Delta^2}{4n_2}-\frac{n_1}{n_2}x_2}_{=:c} = 0.
+\underbrace{\left(n+n^c\right)}_{=:a} \pfp^2 + 
+\underbrace{\left(\Delta-2n\right)}_{=:b} \pfp + 
+\underbrace{n+\frac{\Delta^2}{4n^c}-\frac{n}{n^c}x_2}_{=:c} = 0.
 \end{equation}
-The equation $ax^2 + bx +c=0$ is solved by
+The equation $aw^2 + bw +c=0$ is solved by
 \begin{equation}
-x_{1,2}=\frac{-b\pm\sqrt{b^2-4ac}}{2a}.\label{p}
+w_{1,2}=\frac{-b\pm\sqrt{b^2-4ac}}{2a}.\label{p}
 \end{equation}
-Hence, the problem is solved: for data $\ntot$, $x_1$, $x_2$
+Hence, the problem is solved: for data $N$, $x_1$, $x_2$
 (from these, $x_3$ is implied) and for all possible (unknown) 
-$n_1=0, 1, \ldots, \ntot$ 
+$n=0, 1, \ldots, {N \choose 2}$ 
 we can calculate $\pfp$ via Equation~\eqref{p}, then $\pfn$ via
 Equation~\eqref{q}. Only some of the theoretically possible 
-values of $n_1$ will lead to admissible solutions for $\pfp$ and 
+values of $n$ will lead to admissible solutions for $\pfp$ and 
 $\pfn$. This is exemplified in the following section.
 
 %--------------------------------------------------
@@ -794,10 +862,13 @@ implementation by looking at simulated data.
 The function \texttt{sim} calculates $E[X_1]$, $E[X_2]$ and $E[X_3]$ according
 to Equations~\eqref{x1}--\eqref{x3}. Its arguments 
 \texttt{pfp} ($\pfp$), \texttt{pfn} ($\pfn$),
-\texttt{ntot} ($\ntot$) need to be scalars, \texttt{n1} ($n_1$) can be a vector.
+\texttt{N} ($ntot$) need to be scalars, \texttt{n} ($n1$) can be a vector.
 % 
 <<simulate>>=
 sim = function(n1, pfp, pfn, ntot) { 
+##N   := ntot
+##n   := n1
+##n^c := n2
   nEdges = ntot*(ntot-1)/2
   stopifnot(length(pfp)==1, length(pfn)==1, length(ntot)==1, 
      all(n1<=nEdges)) 
@@ -906,9 +977,13 @@ degs
 
 @ 
 
+We now take the experimental datasets obtained from
+\cite{Ito2001, Uetz2000, Cagney2001, Hazbun2003, Tong2002, 
+Gavin2002, Ho2002, Krogan2004, Gavin2006, Krogan2006} to 
+obtain the 1-dimensional manifolds.
 
 
-<<pfppfnUnfiltSep, echo=TRUE, fig=TRUE, eps=FALSE,include=FALSE,width=8.5,height=12, results=hide>>=
+<<pfppfnUnfiltSep, echo=FALSE, fig=TRUE, eps=FALSE,include=FALSE,width=8.5,height=12, results=hide>>=
 par(mfrow=c(4,3))
 for (i in 1:ncol(degs)) {
   n1 = seq(1, round(3*(sum(degs[c("nrec", "nunr"), i]))))
@@ -918,13 +993,17 @@ for (i in 1:ncol(degs)) {
 }
 @
 
-The result of this is plotted in Figure~\ref{fig-pfppfnUnfiltSep}. 
+We initially plotted each dataset individually to ascertain the 
+range for $\pfp$ and for $\pfn$. The result of this is plotted in 
+Figure~\ref{fig-pfppfnUnfiltSep}. 
+
+\newpage
+
 \myincfig{fig-pfppfnUnfiltSep}{\textwidth}{The solution manifolds
   (one plot per dataset, unfiltered data).}
 
 
-<<pfppfnAll2gether, echo=TRUE, fig=TRUE, eps=FALSE,include=FALSE,width=10,height=15, results=hide>>=
-if(!exists("pfppfnAll2gether")){
+<<pfppfnAll2gether, echo=FALSE, fig=TRUE, eps=FALSE,include=FALSE,width=10,height=15, results=hide>>=
   colors = brewer.pal(6, "Set1")
   par(mfrow=c(2,2))
   expts = list(APMS = grep("^Krogan|^Gavin|^Ho", colnames(degs), 
@@ -982,10 +1061,18 @@ if(!exists("pfppfnAll2gether")){
     }
     counter <- counter+1
   }
-}  
+  
 @
 %
-The result of this is plotted in Figure~\ref{fig-pfppfnAllTogether}. 
+Next we wanted to superimpose all experiments of the same type
+(i.e. the same system was used to determine the interactions) 
+so that we can compare the solutions curves across experiments.
+We do this first on the set of VBP for each dataset, and
+these are rendered in the top two plots. After, 
+we filtered out the proteins likely to be affected by a 
+systematic bias and recalibrated the solution curves. These 
+are rendered in the bottom two plots.
+The result of this is plotted in Figure~\ref{fig-pfppfnAll2gether}. 
 
 \myincfig{fig-pfppfnAll2gether}{0.75\textwidth}{The solution
   manifolds (all datasets in one plot, unfiltered data).}
