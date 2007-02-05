@@ -59,7 +59,7 @@ options(warn=0, error=recover, width=63)
 
 \author{Tony Chiang 
 % \correspondingauthor$^{1,2}$%
-%  \email{Tony Chiang - tchiang@fhcrc.org}
+%  \email{Tony Chiang - tchiang@ebi.ac.uk}
 \and Denise Scholtens %$^3$%
 %       \email{Denise Scholtens - dscholtens@northwestern.edu}\
 \and Deepayaan Sarkar% $^2$%
@@ -82,8 +82,11 @@ options(warn=0, error=recover, width=63)
 % 4. What is the result?
 % 5. What are the implications of the result?
 
-We provide all the necessary materials,methods, and code to generate
-the exploratory data analysis. 
+We provide all the necessary materials, methods, and code to generate
+the exploratory data analysis on bait to prey interaction datasets. 
+This copendium serves as a supplementary source of materials for the
+analysis derived in \emph{A directed graph analysis of protein interaction
+data}.
 \end{abstract}
 
 
@@ -216,11 +219,6 @@ From SGD, we used 6466 as the number of known and characterized
 yeast ORFs. This allowed us to build bar charts to gauge the
 proportion of the yeast interactome viably tested by each 
 experimental dataset.
-
-%\begin{figure}
-%\centering
-%  \includegraphics[width=7cm]{barchart}
-%\end{figure}
 
 We wanted to ascertain if the viably tested proteins showed
 signs of being affected by bias in the experimental assay. 
@@ -369,6 +367,7 @@ if(!exists("bpMat")) {
   }
 }
 @
+
 %----------------------------------------
 %\subsubsection*{Calculating degrees}
 %----------------------------------------
@@ -785,7 +784,7 @@ After calculating the z-score for each protein within an experiment, we
 were able to estimate the distributions within each dataset. 
 
 %--------------------------------------------------
-\section{Estimation of $p$ by the method of moments}
+\section{Estimation of $\pfp$ and $\pfn$ by the method of moments}
 %--------------------------------------------------
 \subsection{Derivation}  
 %--------------------------------------------------
