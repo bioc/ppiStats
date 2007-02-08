@@ -92,11 +92,11 @@ Data}.
 
 \section{Obtaining the PPI Data}
 We begin by detailing the methods by which we obtained the 12 protein 
-interaction datasets. We wanted data that had two properties: the 
+interaction datasets. We wanted data that had two properties: 1. the 
 bait/prey relationship is preserved and 2. that the prey population 
 is documented as genome-wide. These properties are necessary for 
-the digraph analysis. Under these conditions, we downloaded the protein 
-interaction data of \cite{Ito2001, Uetz2000, Zhao2005, Cagney2001, 
+the directed graph analysis. Under these conditions, we downloaded the 
+protein interaction data of \cite{Ito2001, Uetz2000, Zhao2005, Cagney2001, 
 Tong2002, Hazbun2003, Gavin2006} from the \emph{IntAct} repository; 
 we obtained \cite{Gavin2002, Ho2002, Krogan2004, Krogan2006} from their 
 primary sources. Having obtained the bait/prey protein interaction
@@ -761,10 +761,9 @@ universe is VBP$_{C} = $ VBP$_{\mbs{G}} \mbox{ } \cap$ VBP$_{\mbs{K}}$.
 \cite{Gavin2006} index the rows; \cite{Krogan2006}, the columns. 
 In the $(2,2)$-entry of each table, we count the number of common 
 proteins affected by a bias in both experiments; in $(1,2)$-entry,
-we count the number affected in \cite{Gavin2006} but not in 
-\cite{Krogan2006}; in $(2,1)$, the number in \cite{Krogan2006} not 
-in \cite{Gavin2006}; and in $(1,1)$, the number not affected in both.
-We can create three separate $2 \times 2$ tables:
+we count the number affected in \cite{Gavin2006} only; in $(2,1)$, 
+the number in \cite{Krogan2006} only; and in $(1,1)$, the number not 
+affected in both. We can create three separate $2 \times 2$ tables:
 
 \begin{itemize}
   \item Number of proteins affected by a two-sided binomial test.
