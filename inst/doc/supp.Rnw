@@ -54,7 +54,8 @@ options(warn=0, error=recover, width=63)
 \begin{document}
 
 %----------------------------------------------------------------------
-\title{A Supplement to the Digraph Manuscript}
+\title{Supplementary Material for "Coverage and Error Models of 
+  Protein-Protein Interactin Data by Directed Graph Analysis"}
 % ---------------------------------------------------------------------
 
 \author{Tony Chiang 
@@ -84,7 +85,7 @@ options(warn=0, error=recover, width=63)
 
 We provide all the necessary materials, methods, and code to generate
 the exploratory data analysis on bait to prey interaction datasets. 
-This copendium serves as a supplementary source of materials for the
+This compendium serves as a supplementary source of materials for the
 analysis derived in \emph{A Directed Graph Analysis of Protein Interaction
 Data}.
 \end{abstract}
@@ -92,16 +93,18 @@ Data}.
 
 \section{Obtaining the PPI Data}
 We begin by detailing the methods by which we obtained the 12 protein 
-interaction datasets. We wanted data that had two properties: 1. the 
-bait/prey relationship is preserved and 2. that the prey population 
-is documented as genome-wide. These properties are necessary for 
-the directed graph analysis. Under these conditions, we downloaded the 
-protein interaction data of \cite{Ito2001, Uetz2000, Zhao2005, Cagney2001, 
-Tong2002, Hazbun2003, Gavin2006} from the \emph{IntAct} repository; 
-we obtained \cite{Gavin2002, Ho2002, Krogan2004, Krogan2006} from their 
+
+interaction datasets. We wanted data that had two properties: 1. 
+information on the bait/prey data is preserved and 2. the prey population 
+is documented as genome-wide. We downloaded the protein 
+interaction data of \cite{Ito2001. Uetz2000, Zhao2005, Cagney2001, 
+Tong2002, Hazbun2003, Gavin2006} from the \emph{IntAct} repository. 
+We obtained \cite{Gavin2002, Ho2002, Krogan2004, Krogan2006} from their 
 primary sources. Having obtained the bait/prey protein interaction
-data, we created the R-data package \Rpackage{ppiData} where each dataset
-is stored as a directed graph (digraph).
+data, we created an R data-package \Rpackage{ppiData} where we stored this 
+data. Each dataset is stored in \Rpackage{ppiData} as a directed 
+graph object.
+
 
 <<ppiData, echo=FALSE, results=hide>>=
 library("ppiData")
@@ -120,7 +123,7 @@ To represent all the data uniformly, the names used to indicate
 the identity of the proteins are given by the Open Reading Frames
 (ORFs) corresponding to each protein. If the ORF is
 unavailable, either the protein common name or another identifier
-(IntAct acension code, SwissProt ID, etc) is used. 
+(IntAct accension code, SwissProt ID, etc) is used. 
 
 <<ppiData, echo=TRUE>>=
 data("bpExperimentNames")
@@ -144,29 +147,31 @@ data(proteinProperties)
 @ 
 
 \section{Sampling}
+\subsection{Analysis on the Bait/Prey Interactions}
 We addressed the issue of sampling initially by the viable bait 
 and viable prey population observed in the experimental datasets.
 From the directed graphs, we created the two lists 
 \Robject{viableBaits} and \Robject{viablePrey} by asking if
-each protein as a vertex had non-trivial out- and in-degree 
-respectively modulo self-loops (i.e homodimers). From these
+each protein as a vertex had non-zero out- and in-degree 
+respectively modulo self-loops (i.e homomers). From these
 two lists, we were able to find the set theoretic intersections
 of the viable baits (VB) and viable prey (VP) per experiment to 
 ascertain the viable bait/prey (VBP) populations. 
 
 <<vbp>>=
-vbp <- mapply(function(x,y) intersect(x,y), viableBaits, viablePrey)
+vbp <- mapply(intersect, viableBaits, viablePrey)
 @  
 
 <<twoBytwo, echo=FALSE, results=hide>>=
 
 cache(vbpGraph <- mapply(function(x,y){subGraph(x, get(y))},vbp,bpExperimentNames))
 
-cache(vbpStochastic <- lapply(vbpGraph, function(x) 
-                              {if(length(nodes(x))!=0) 
-                                 idStochastic(x, bpGraph=TRUE)}))
+
+cache(vbpStochastic <- lapply(vbpGraph, function(x) {if(length(nodes(x))!=0) 
+                                                 idStochastic(x, bpGraph=TRUE)}))
 cache(vbpSystematic <- mapply(function(x,y){setdiff(nodes(x),y)},
                         vbpGraph,vbpStochastic))
+
 exp1 <- vbp[[11]]
 exp2 <- vbp[[12]]
 x <- intersect(exp1, exp2)
@@ -205,38 +210,43 @@ y2[indexK2, 2] <- 1
 z2 <- data.frame(y2)
 
 tab <- table(z$Gavin06, z$Krogan06)
+tab2Way <- tab
 ft <- fisher.test(tab)
 
 tab1 <- table(z1$Gavin06, z1$Krogan06)
+tab1WayIN <- tab1
 ft1 <- fisher.test(tab1)
 
 tab2 <- table(z2$Gavin06, z2$Krogan06)
+tab1WayOUT <- tab2
 ft2 <- fisher.test(tab2)
 
 @ 
 
 From SGD, we used 6466 as the number of known and characterized 
 yeast ORFs. This allowed us to build bar charts to gauge the
-proportion of the yeast interactome viably tested by each 
-experimental dataset.
+proportion of the yeast interactome tested by each 
+experimental dataset. 
 
+
+\subsection{Hypergeometric Testing}
 We wanted to ascertain if the viably tested proteins showed
 signs of being affected by a selection bias in the experimental assay. 
 To investigate, we used the conditional hypergeometric tests
-developed by \cite{Falcon2006} to test for over/under 
-representation within Gene Ontology. Using the R software packages
+described by \cite{Falcon2006} to test for over/under 
+representation in GO categories. Using the R software packages
 \Rpackage{Category} and \Rpackage{GOstats}, we were able
-to asses these questions. The code used to test for over and
-under representation can be found in the \Robject{hgGO.R} script and is a 
-separate entity. It has been bundled with the supplementary materials 
-but can also be found within the inst/Scripts/ directory of the R packge 
-\Rpackage{ppiStats}. Running the script will generate .html files 
-of those GO categories which are either over/under represented. 
-For our purposes, we used a p-value cutoff threshold of $10^{-2}$. 
-In addition, we were only interested in those GO categories which
-contained at least 50 unique annotations. Both these parameters can
-be set by the user, and those who are familiar with the R programming
-language are free to manipulate these parameters within the R scripts.
+to asses these questions. For our purposes, we used a p-value 
+cutoff at the $10^{-2}$ threshold. We were only interested in 
+GO categories which contained at least 50 unique annotations 
+as well. Both these parameters can be set by the user, and 
+those familiar with the R programming language are free
+to manipulate these parameters within the R scripts.
+
+The code written to conduct these hypergeometric tests has been 
+supplied with the main article as an additional file. It can 
+also be found in the inst/Script/ directory of the 
+\Rpackage{ppiStats} package.
 
 
 \section{Systematic Bias}
@@ -419,7 +429,7 @@ $(n_{i}, n_{o})$, the $p$-value is
 p(n_{i}, n_{o}) &=& 
 P(\mbox{min}\{ N_{I}, N_{O} \} \le  \mbox{min}\{ n_{i}, n_{o} \} ) \nonumber\\
 &=& \max 
-\{ 2P(N_{I} \le  \mbox{min}\{ n_{i}, n_{o}), \, 1 \}
+\{ 2P(N_{I} \le  \mbox{min}\{n_{i}, n_{o}\}), \, 1 \}
 \label{symmpvalue}
 \end{eqnarray}
 %
@@ -533,7 +543,7 @@ close(out)
 
 For a more illuminating visual effect, we have perturbed the data on each
 point of the figures. This perturbation shows the relative concentration 
-of data for each point on in each of the figures. 
+of data for each point in each of the figures. 
 
 \include{unrecipInOutDistribIncludes}
 
@@ -766,46 +776,44 @@ the number in \cite{Krogan2006} only; and in $(1,1)$, the number not
 affected in both. We can create three separate $2 \times 2$ tables:
 
 \begin{itemize}
-  \item Number of proteins affected by a two-sided binomial test.
-  \item Number of proteins affected by a one-sided binomial test where
+  \item Number of proteins identified by the two-sided binomial test.
+  \item Number of proteins identified by the one-sided binomial test where
     in-degree is much larger than out-degree.
-  \item Number of proteins affected by a one-sided binomial test where
+  \item Number of proteins identified by the one-sided binomial test where
     out-degree is much larger than in-degree.
 \end{itemize}
 
 <<print2by2>>=
-tab
-tab1
-tab2
+tab2Way
+tab1WayIN
+tab1WayOUT
 @ 
 
 We can use these three tables as the parameters for Fisher's Exact 
 test (again a hypergeometric test), and see the results:
 
 <<printFishers>>=
-fisher.test(tab)
-fisher.test(tab1)
-fisher.test(tab2)
+fisher.test(tab2Way)
+fisher.test(tab1WayIN)
+fisher.test(tab1WayOUT)
 @ 
 
-The Fisher tests show relatively small p-values for all three
-$2 \times 2$ tables though the most significant occurs for the 
-one-sided binomial test when the in-degree dominates the 
-out-degree. 
+The Fisher tests show relatively small p-values and substantial
+odds ratio for all three $2 \times 2$ tables though the most 
+significant occurs for the one-sided binomial test when the 
+in-degree dominates the out-degree. 
 
 
 \subsection{Unreciprocated Degree Statistics}
-Our binomial model allows us to determine proteins that might be subject 
+Our Binomial model allows us to determine proteins that might be subject 
 to a systematic bias of the experiment where each statistical test is 
 conducted on a per protein level. In addition to these series of statistical 
 test, we can describe experiment-wide bias by using the same binomial model 
 for each protein. 
 
 For each protein $\rho$ with directed degree $(i_{\rho},o_{\rho})$ and 
-$n_{\rho} = i_{\rho}+o_{\rho}$, we can, without loss of generality, assume 
-that an out-edge represents a success in our binomial model. Therefore, 
-we can standardize this directed degree and compute the \emph{z-score} for 
-each protein:
+$n_{\rho} = i_{\rho}+o_{\rho}$, we can standardize the out-degree and 
+compute the corresponding \emph{z-score} for each protein:
 
 \begin{eqnarray}
 z_{\rho} &=& \frac{\frac{1}{2}\;n_{\rho} - o_{\rho}}
@@ -838,20 +846,17 @@ sh <- lapply(zScore1, shorth)
 <<zScoreDens, fig=TRUE, width=18, height=18, echo=FALSE, results=hide>>=
 
 par(mfrow = c(3,4), cex.main = 2, cex.lab=1.5, cex.axis=1.5)
-mapply(function(x,y,z,w) {
-  plot.density(x, 
-               main=y, col="blue");
-  abline(v=z, col="red");
-  abline(v=w, col="green")}, dens, dNames1, sh, m)
+mapply(function(x,y) {
+  hist(x, main=y, col="blue")},
+  zScore1, dNames1)
 @ 
 
-The Density plots of the z-score distributions are given for eleven datasets.
-The green lines corresponds to the mean of the distributions while the red 
-lines corrsponds to the \emph{shorth} of the distribution. The \emph{shorth}
-first calculates a minimal bin such that at approximately 50\% of the mass 
-falls within this bin and then calculates the median for this bin. In essence,
-a modified interquartile range is computed along with the modified median. This
-can describle a tightly clusterd set of data points by their median value.
+Histograms are plotted to determine the standard out-degree 
+distributions. We can see that for datasets such as 
+\cite{Cagney2001, Tong2002, Hazbun2003}, there are relatively
+few data points which yield little statistical power. Overall,
+Only the \cite{Ito2001, Gavin2006, Krogan2006} plots showed
+approximate unimodal distributions.
 
 
 \newpage
@@ -933,7 +938,7 @@ implementation by looking at simulated data.
 The function \texttt{sim} calculates $E[X_1]$, $E[X_2]$ and $E[X_3]$ according
 to Equations~\eqref{x1}--\eqref{x3}. Its arguments 
 \texttt{pfp} ($\pfp$), \texttt{pfn} ($\pfn$),
-\texttt{N} ($ntot$) need to be scalars, \texttt{n} ($n1$) can be a vector.
+\texttt{ntot} ($N$) need to be scalars, \texttt{n1} ($n$) can be a vector.
 % 
 <<simulate>>=
 sim = function(n1, pfp, pfn, ntot) { 
@@ -1064,7 +1069,7 @@ for (i in 1:ncol(degs)) {
 }
 @
 
-We initially plotted each dataset individually to ascertain the 
+We plot each dataset individually to ascertain the 
 range for $\pfp$ and for $\pfn$. The result of this is plotted in 
 Figure~\ref{fig-pfppfnUnfiltSep}. 
 
