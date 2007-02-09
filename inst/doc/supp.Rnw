@@ -86,14 +86,33 @@ options(warn=0, error=recover, width=63)
 We provide all the necessary materials, methods, and code to generate
 the exploratory data analysis on bait to prey interaction datasets. 
 This compendium serves as a supplementary source of materials for the
-analysis derived in \emph{A Directed Graph Analysis of Protein Interaction
-Data}.
+analysis derived in \emph{Coverage and Error Models of Protein-Protein
+Interaction Data by Directed Graph Analysis}.
 \end{abstract}
 
+\section{Introduction}
+This is a technical report that demonstrates the use of \Rpackage{ppiStats}, 
+\Rpackage{ppiData}, and \Rpackage{yeastExptData} R packages. 
+It accompanies the paper \emph{Coverage and Error Models of Protein-Protein 
+Interaction Data by Directed Graph Analysis} by Chiang et al. This report explains 
+all the steps taken to perform the analysis on the protein interaction data.
+This text has been produced as a reproducible document. It contains 
+the actual computer instructions for the method it describes, and these in 
+turn produce all results, including the figures and tables that are shown 
+here. The computer instructions are given in the language R, thus, in order 
+to reproduce the computations shown here, you will need an installation 
+of R (version 2.4.1 or greater) together with recent versions of the three packages 
+listed above and of some other add-on packages. 
+To reproduce the computations shown here, you do not need to type 
+them or copy-paste them from the PDF file; rather, you can take the file 
+supp.Rnw in the doc directory of the \Rpackage{ppiStats} package, open it in a 
+text editor, run 
+it using the R command Sweave, and modify it to your needs. Alternatively, if
+you would simply like the code without the surrounding text, you can call 
+Rtangle on the supp.Rnw file to generate a script file called supp.R.
 
 \section{Obtaining the PPI Data}
 We begin by detailing the methods by which we obtained the 12 protein 
-
 interaction datasets. We wanted data that had two properties: 1. 
 information on the bait/prey data is preserved and 2. the prey population 
 is documented as genome-wide. We downloaded the protein 
@@ -245,7 +264,7 @@ to manipulate these parameters within the R scripts.
 
 The code written to conduct these hypergeometric tests has been 
 supplied with the main article as an additional file. It can 
-also be found in the inst/Script/ directory of the 
+also be found in the Script directory of the 
 \Rpackage{ppiStats} package.
 
 
@@ -1081,7 +1100,7 @@ Figure~\ref{fig-pfppfnUnfiltSep}.
 
 <<pfppfnAll2gether, echo=FALSE, fig=TRUE, eps=FALSE,include=FALSE,width=10,height=15, results=hide>>=
   colors = brewer.pal(6, "Set1")
-  par(mfrow=c(2,2), pty="s")
+  par(mfrow=c(2,2), pty="s", lwd=2)
   expts = list(APMS = grep("^Krogan|^Gavin|^Ho", colnames(degs), 
                  value=TRUE), Y2H = grep("^Ito|^Uetz|^Cagney|^Tong|^Hazbun", 
                                 colnames(degs), value=TRUE))
@@ -1101,8 +1120,8 @@ Figure~\ref{fig-pfppfnUnfiltSep}.
          sub=paste("(",letters[counter],")",sep=""),
          xlim=c(0,xmax[what]))
 
-    
-    legend(xmax[what], 1, expts[[what]], lty=1, lwd=2, 
+    newName <- sub("-$", "", sub("BPGraph", "-", expts[[what]]))
+    legend(xmax[what], 1, newName, lty=1, lwd=2, 
            col=colors[seq(along=expts[[what]])], xjust=1, yjust=1)
 
     for (i in seq(along=expts[[what]])) {
