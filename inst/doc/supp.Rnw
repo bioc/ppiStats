@@ -182,18 +182,57 @@ We obtained \cite{Gavin2002, Ho2002, Krogan2004, Krogan2006} from their
 primary sources. Having obtained the bait/prey protein interaction
 data, we created an R data-package \Rpackage{ppiData} where we stored this 
 data. Each dataset is stored in \Rpackage{ppiData} as a directed 
-graph object.
+graph object. As an example, we have selected 4 proteins from the 
+\cite{Krogan2006} dataset and rendered its vertex induced subgraph in
+Figure~\ref{fig:egKrogan06}.
 
+<<egKrogan06, fig=TRUE, width=3, height=3.5, prefix=FALSE, include=FALSE, echo=FALSE, results=hide>>=
+if(!exists("egKrogan06"))
+  load("egKrogan06.rda")
+
+par(mai=rep(0,4), lwd=2)
+stopifnot(identical(nodes(egKrogan06), c("YAL005C", "YBR092C", "YBR118W", "YPR190C")))
+trivialnames = c("SSA1", "PHO3", "TEF2", "RPC82C")
+plot(egKrogan06, "dot", nodeAttrs=makeNodeAttrs(egKrogan06, 
+  fillcolor=brewer.pal(9, "Pastel1")[c(2, 9, 2, 2)],
+  label=trivialnames, width="3", height="1.2",
+  shape="ellipse"))
+@ 
+
+%
+\begin{figure}
+\centering
+\includegraphics[width=45mm]{egKrogan06}
+\caption{\label{fig:egKrogan06}% 
+The interaction data between four
+selected proteins from Krogan et al.'s experiment~\cite{Krogan2006}. The
+bi-directional edge between the ATPase \textit{SSA1} and the translational 
+elongation factor \textit{TEF2}
+indicates that either one as a bait pulled down the other one as a
+prey. The directed edge from \textit{RPC82}, a subunit of RNA polymerase III, 
+to \textit{SSA1} indicates that \textit{RPC82} as a bait pulled down 
+\textit{SSA1}, but not vice versa. 
+Another unreciprocated edge goes from
+the phosphatase \textit{PHO3} to\textit{TEF2}.  An investigation of the dataset
+shows that \textit{PHO3}, which localizes in the periplasmatic space, 
+was not reported in any interaction as a prey, while \textit{RPC82C} was.
+In the interpretation of the data, we would have most confidence that there is a 
+real interaction between \textit{SSA1} and \textit{TEF2}. We can differentiate between
+the two unreciprocated interactions: the one
+between \textit{RPC82C} and \textit{SSA1} has been bi-directionally
+tested, but only found once, while the other one has only been uni-directionally 
+tested and found.}
+\end{figure}
 
 The vector \emph{bpExperimentNames} contains the names to each 
 of the digraph objects. In addition, two list objects (called
 \emph{viableBaits} and \emph{viablePrey}) contain the viable
 baits and viable prey for each experimental dataset respectively.
-To represent all the data uniformly, the names used to indicate
-the identity of the proteins are given by the Open Reading Frames
-(ORFs) corresponding to each protein. If the ORF is
-unavailable, either the protein common name or another identifier
-(IntAct accension code, SwissProt ID, etc) is used. 
+To represent all the data uniformly, the identifier for 
+each protein is given by its corresponding Open Reading Frame
+(ORF). If the ORF is unavailable, either the protein common name 
+or another identifier (IntAct accension code, SwissProt ID, etc) 
+is used. 
 
 <<ppiData, echo=TRUE>>=
 data("bpExperimentNames")
@@ -228,83 +267,9 @@ two lists, we were able to find the set theoretic intersections
 of the viable baits (VB) and viable prey (VP) per experiment to 
 ascertain the viable bait/prey (VBP) populations. 
 
-<<egKrogan06, fig=TRUE, width=3, height=3.5, prefix=FALSE, include=FALSE, echo=FALSE, results=hide>>=
-if(!exists("egKrogan06"))
-  load("egKrogan06.rda")
-
-par(mai=rep(0,4), lwd=2)
-stopifnot(identical(nodes(egKrogan06), c("YAL005C", "YBR092C", "YBR118W", "YPR190C")))
-trivialnames = c("SSA1", "PHO3", "TEF2", "RPC82C")
-plot(egKrogan06, "dot", nodeAttrs=makeNodeAttrs(egKrogan06, 
-  fillcolor=brewer.pal(9, "Pastel1")[c(2, 9, 2, 2)],
-  label=trivialnames, width="3", height="1.2",
-  shape="ellipse"))
-@ 
-
 <<vbp>>=
 vbp <- mapply(intersect, viableBaits, viablePrey)
 @  
-
-<<twoBytwo, echo=FALSE, results=hide>>=
-
-cache(vbpGraph <- mapply(function(x,y){subGraph(x, get(y))},vbp,bpExperimentNames))
-
-
-cache(vbpStochastic <- lapply(vbpGraph, function(x) {if(length(nodes(x))!=0) 
-                                                 idStochastic(x, bpGraph=TRUE)}))
-cache(vbpSystematic <- mapply(function(x,y){setdiff(nodes(x),y)},
-                        vbpGraph,vbpStochastic))
-
-exp1 <- vbp[[11]]
-exp2 <- vbp[[12]]
-x <- intersect(exp1, exp2)
-y <- matrix(0, nrow=length(x), ncol=2)
-rownames(y) <- x
-colnames(y) <- c("Gavin06","Krogan06")
-y1 <- y
-y2 <- y
-
-cache(dG <- calcInOutDegStats(vbpGraph[[11]]))
-cache(dK <- calcInOutDegStats(vbpGraph[[12]]))
-
-gavLargeSysIn <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[[11]]] > 0))
-gavLargeSysOut <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[[11]]] < 0))
-
-kroLargeSysIn <- names(which((dK$inDegreeMinusOutDegree)[vbpSystematic[[12]]] > 0))
-kroLargeSysOut <- names(which((dK$inDegreeMinusOutDegree)[vbpSystematic[[12]]] < 0))
-
-indexG <- x %in% vbpSystematic[[11]]
-indexK <- x %in% vbpSystematic[[12]]
-indexG1 <- x %in% gavLargeSysIn
-indexK1 <- x %in% kroLargeSysIn
-indexG2 <- x %in% gavLargeSysOut
-indexK2 <- x %in% kroLargeSysOut
-
-y[indexG, 1] <- 1
-y[indexK, 2] <- 1
-z <- data.frame(y)
-
-y1[indexG1, 1] <- 1
-y1[indexK1, 2] <- 1
-z1 <- data.frame(y1)
-
-y2[indexG2, 1] <- 1
-y2[indexK2, 2] <- 1
-z2 <- data.frame(y2)
-
-tab <- table(z$Gavin06, z$Krogan06)
-tab2Way <- tab
-ft <- fisher.test(tab)
-
-tab1 <- table(z1$Gavin06, z1$Krogan06)
-tab1WayIN <- tab1
-ft1 <- fisher.test(tab1)
-
-tab2 <- table(z2$Gavin06, z2$Krogan06)
-tab1WayOUT <- tab2
-ft2 <- fisher.test(tab2)
-
-@ 
 
 From SGD, we used 6466 as the number of known and characterized 
 yeast ORFs. This allowed us to build bar charts to gauge the
@@ -496,13 +461,6 @@ makeBPMat <- function(){
     stopifnot(identical(rownames(m), colnames(m)))
     vbp = rownames(m)[ (rowSums(m)>0) & (colSums(m)>0) ]
 
-    ## alternative
-    ##vtc = intersect(viableBaits[[g]], viablePrey[[g]])
-
-    ##if(!all(vbp %in% vtc)) 
-      ##warnings(sprintf("%21s: found inconsistency with viable baits/prey\n", g))
-
-    ## restrict to subgraph
     m = m[vbp, vbp]
 
     if(nrow(m)>1) {
@@ -695,14 +653,10 @@ protein's properties.  Let $p$ be the true probability ($H_0: p =
 \end{itemize}
 Regression is restricted to the subgraph of proteins that are VBP.
 
-<<setup,results=hide,echo=FALSE,results=hide>>=
-#library(ppiStats)
-#library(yeastExpData)
-#library(ppiData)
+<<setupLogReg,results=hide,echo=FALSE,results=hide>>=
 data(gfp)
 data(proteinProperties)
 data(fcabundance)
-##
 @ 
 
 <<init,results=hide,echo=FALSE,cache=TRUE>>=
@@ -885,9 +839,12 @@ do.call(rbind,
 ##
 @ 
 
-In addition to the Logistic Regressions, we plotted the adjacency matrix diagram of 
-of the bait/prey interactions in two different ways: 1. the rows and columns 
-randomly ordered and 2. the rows and columns ordered by ascending CAI. 
+In addition to the Logistic Regressions, we plotted the adjacency matrix 
+diagram of the bait/prey interactions in two different ways: 1. the rows 
+and columns randomly ordered and 2. the rows and columns ordered by ascending 
+CAI (cf Figure~\ref{fig:caiplots}). This readily gives a visual method of 
+identifying the association between CAI and proteins rejecting the 2-sided 
+Binomial test.
 
 <<GavinMat, include=FALSE, echo=FALSE, results=hide>>=
 
@@ -981,6 +938,67 @@ affected in both. We can create three separate $2 \times 2$ tables:
     out-degree is much larger than in-degree.
 \end{itemize}
 
+<<twoBytwo, echo=FALSE, results=hide>>=
+
+cache(vbpGraph <- mapply(function(x,y){subGraph(x, get(y))},vbp,bpExperimentNames))
+
+
+cache(vbpStochastic <- lapply(vbpGraph, function(x) {if(length(nodes(x))!=0) 
+                                                 idStochastic(x, bpGraph=TRUE)}))
+cache(vbpSystematic <- mapply(function(x,y){setdiff(nodes(x),y)},
+                        vbpGraph,vbpStochastic))
+
+exp1 <- vbp[[11]]
+exp2 <- vbp[[12]]
+x <- intersect(exp1, exp2)
+y <- matrix(0, nrow=length(x), ncol=2)
+rownames(y) <- x
+colnames(y) <- c("Gavin06","Krogan06")
+y1 <- y
+y2 <- y
+
+cache(dG <- calcInOutDegStats(vbpGraph[[11]]))
+cache(dK <- calcInOutDegStats(vbpGraph[[12]]))
+
+gavLargeSysIn <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[[11]]] > 0))
+gavLargeSysOut <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[[11]]] < 0))
+
+kroLargeSysIn <- names(which((dK$inDegreeMinusOutDegree)[vbpSystematic[[12]]] > 0))
+kroLargeSysOut <- names(which((dK$inDegreeMinusOutDegree)[vbpSystematic[[12]]] < 0))
+
+indexG <- x %in% vbpSystematic[[11]]
+indexK <- x %in% vbpSystematic[[12]]
+indexG1 <- x %in% gavLargeSysIn
+indexK1 <- x %in% kroLargeSysIn
+indexG2 <- x %in% gavLargeSysOut
+indexK2 <- x %in% kroLargeSysOut
+
+y[indexG, 1] <- 1
+y[indexK, 2] <- 1
+z <- data.frame(y)
+
+y1[indexG1, 1] <- 1
+y1[indexK1, 2] <- 1
+z1 <- data.frame(y1)
+
+y2[indexG2, 1] <- 1
+y2[indexK2, 2] <- 1
+z2 <- data.frame(y2)
+
+tab <- table(z$Gavin06, z$Krogan06)
+tab2Way <- tab
+ft <- fisher.test(tab)
+
+tab1 <- table(z1$Gavin06, z1$Krogan06)
+tab1WayIN <- tab1
+ft1 <- fisher.test(tab1)
+
+tab2 <- table(z2$Gavin06, z2$Krogan06)
+tab1WayOUT <- tab2
+ft2 <- fisher.test(tab2)
+
+@ 
+
 <<print2by2>>=
 tab2Way
 tab1WayIN
@@ -1021,8 +1039,9 @@ z_{\rho} &=& \frac{\frac{1}{2}\;n_{\rho} - o_{\rho}}
 
 After calculating the z-score for each protein within an experiment, we 
 were able to estimate the distributions within each dataset. Using the 
-R \Rfunction{density} function, we were able to render the density distribution 
-for each dataset.
+R \Rfunction{hist} and \Rfunction{density} functions, we were able to 
+render the histograms for eleven of the datasets and the smooth density 
+distribution for the three largest datasets.
 
 <<zscore, echo=FALSE, results=hide>>=
 normFunc <- function(ni, no) (ni-no)/(sqrt(ni+no))
@@ -1041,7 +1060,7 @@ sh <- lapply(zScore1, shorth)
 @ 
 
 
-<<zScoreDens, fig=TRUE, width=18, height=18, echo=FALSE, results=hide>>=
+<<zScoreHist, fig=TRUE, width=18, height=18, echo=FALSE, results=hide, include=FALSE>>=
 
 par(mfrow = c(3,4), cex.main = 2, cex.lab=1.5, cex.axis=1.5)
 mapply(function(x,y) {
@@ -1049,13 +1068,36 @@ mapply(function(x,y) {
   zScore1, dNames1)
 @ 
 
+\myincfig{fig-zScoreHist}{\textwidth}{Histograms of the out-degree z-scores.}
+
 Histograms are plotted to determine the standard out-degree 
-distributions. We can see that for datasets such as 
+distributions (Figure~\ref{fig-zScoreHist}). We can see that for 
+datasets such as 
 \cite{Cagney2001, Tong2002, Hazbun2003}, there are relatively
 few data points which yield little statistical power. Overall,
 Only the \cite{Ito2001, Gavin2006, Krogan2006} plots showed
 approximate unimodal distributions.
 
+<<zScoreDens, fig=TRUE, width=18, height=18, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
+par(mfrow = c(3,1), cex.main = 2, cex.lab=1.5, cex.axis=1.5)
+zScore2 <- zScore1[c(1,10,11)]
+dNames2 <- dNames1[c(1,10,11)]
+m2 <- m[c(1,10,11)]
+dens <- lapply(zScore2, density)
+sh <- lapply(zScore2, shorth)
+mapply(function(x,y,z,w) {plot.density(x, main=paste("Distribution of the z-scores for ", y, sep=""), col="blue");
+                      abline(v=z, col="red");
+                          abline(v=w, col="green")}, dens, dNames2, sh, m2)
+
+
+@
+
+\myincfig{fig-zScoreDens}{\textwidth}{Density plots for the three largest
+bait/prey datasets.}
+
+For the three plots that appear to have unimodal distributions, we plotted 
+their densities (Figure~\ref{fig-zScoreDens}). With more data points, we can 
+better investigate these densities for possible biological associations. 
 
 \newpage
 %--------------------------------------------------
@@ -1351,6 +1393,110 @@ The result of this is plotted in Figure~\ref{fig-pfppfnAll2gether}.
 
 \myincfig{fig-pfppfnAll2gether}{0.75\textwidth}{The solution
   manifolds (all datasets in one plot, unfiltered data).}
+
+\section{Cross Data Integration and Analysis}
+We have shown that protein interaction analysis can be measured
+by three quality metrics: 1. sampling, 2. proteins that might
+be affected by systematic bias due to the experiment, and 3.
+general stochastic variation. It is necessary to consider each of 
+these three metrics if one would like to begin cross experimental
+analysis. 
+
+<<matrixPlot, fig=TRUE, width=10, height=10, prefix=FALSE, echo=FALSE, include=FALSE, results=hide>>=
+firstx <- c(0, 0.6)
+firsty <- c(0, 0.6)
+secondx <- c(0.4, 0.9)
+secondy <- c(0.4, 0.9)
+colors <- c(brewer.pal(12, "Paired")[c(1,3,2)], "gray85")
+lwd <- 2
+
+grid.newpage()
+pushViewport(viewport(width = 0.8, height = 0.8))
+    
+grid.lines(firstx, 1.05, gp = gpar(col = colors[1], lwd = lwd))
+grid.text("Prey of Experiment 1", 0.15, 1.07,check.overlap=TRUE, 
+          gp = gpar(col = colors[1], cex = 2))
+grid.lines(-0.05, 1 - firsty, gp = gpar(col = colors[1], lwd = lwd),
+           name = "Baits of Experiment 1")
+grid.text("Baits of Experiment 1", -0.07, 0.855, gp = gpar(col = colors[1], 
+                                              cex=2), rot=90)
+grid.lines(secondx, 1.10, gp = gpar(col = colors[2], lwd = lwd),
+           name = "Prey of Experiment 2")
+grid.text("Prey of Experiment 2", 0.755, 1.085, gp = gpar(col = colors[2], 
+                                              cex=2))
+grid.lines(-0.10, 1 - secondy, gp = gpar(col = colors[2], lwd = lwd),
+           name = "Baits of Experiment 2")
+grid.text("Baits of Experiment 2", -0.083, 0.245, gp = gpar(col = colors[2], 
+                                              cex=2), rot=90)
+    
+grid.rect(x = min(firstx, secondx),
+          y = 1 - min(firstx, secondx),
+          width = max(firstx, secondx) - min(firstx, secondx),
+          height = max(firsty, secondy) - min(firsty, secondy),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[4], col = "transparent"))
+
+grid.rect(x = min(firstx),
+          y = 1 - min(firstx),
+          width = max(firstx) - min(firstx),
+          height = max(firsty) - min(firsty),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[1], col = "transparent"))
+
+
+grid.rect(x = min(secondx),
+          y = 1 - min(secondx),
+          width = max(secondx) - min(secondx),
+          height = max(secondy) - min(secondy),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[2], col = "transparent"))
+
+grid.rect(x = min(secondx),
+          y = 1 - min(secondx),
+          width = max(secondx) - min(secondx),
+          height = max(secondy) - min(secondy),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[2], col = "transparent"))
+
+grid.rect(x = min(secondx),
+          y = 1 - min(secondx),
+          width = max(firstx) - min(secondx),
+          height = max(firsty) - min(secondy),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[3], col = "transparent"))
+
+    
+grid.rect()
+@ 
+
+\myincfig{matrixPlot}{\textwidth}{Adjacency matrix representing
+the tested interactions of two separate experiments. The light 
+blue square shows the set of tested interactions for experiment
+1 while the light green shows the tested interactions for 
+experiment 2. The dark blue square indicates those tested
+interactions common to both experiments while the gray shaded
+area were untested in both.}
+
+As an example we show how sampling is fundamental for 
+inter-experimental analysis. 
+
+The
+possible pitfalls of naive comparisons between two experimental
+datasets are depicted in Figure~\ref{matrixPlot}. %~\ref{fig:matPlot}. 
+The interactions in the intersection of the rectangles (darker blue) 
+were tested by both; the interactions in the light blue and green 
+areas were tested by one experiment but not the other; and the 
+interactions in the light grey areas were tested by 
+neither experiment. A data analysis that does not keep track of these
+different sampling characteristics risks being misleading. Therefore,
+sampling must be taken into consideration when integrating and 
+comparing multiple datasets. Additionally, discrepancies will arise 
+due to the set conditions of each experiment, and these discrepancies 
+should be isolated from the variability across the experiments so 
+the error rates have a more meaningful interpretation. Ultimately,
+there are still many more steps needed to integrate datasets,
+and we provide a few necessary components.
+
 
 \bibliographystyle{plain} 
 \bibliography{proteinReview}
