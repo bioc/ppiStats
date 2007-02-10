@@ -51,11 +51,71 @@ library("Matrix")
 options(warn=0, error=recover, width=63)
 @ 
 
+<<ppiData, echo=FALSE, results=hide>>=
+library("ppiData")
+get(bpExperimentNames[8])
+bpGraphs = new.env(parent=globalenv(), hash=FALSE)
+data(list=bpExperimentNames, envir=bpGraphs)
+for(j in ls(bpGraphs))
+  assign(j, eval(get(j, env=bpGraphs)), env=bpGraphs)
+@ 
+
+<<createEDATable, echo=FALSE, results=hide>>=
+## remove the "BPGraph", but keep a "-" if it is followed by a number
+dNames <- sub("-$", "", sub("BPGraph", "-", bpExperimentNames))
+numVB <- listLen(viableBaits)
+numVP <- listLen(viablePrey)
+numVBP <- mapply(function(x,y) {length(intersect(x,y))}, viableBaits, viablePrey)
+nI  <- unlist(eapply(bpGraphs, function(x) {sum(sapply(x@edgeL, function(y) {length(y[[1]])}))}))[bpExperimentNames]
+nI2 <- unlist(eapply(bpGraphs, function(g) {d=degree(g); s=sum(d$inDegree); stopifnot(s==sum(d$outDegree)); return(s)}))
+numInteractions <- unlist(eapply(bpGraphs, function(g) sum(degree(g)$inDegree)))
+
+## eventually, nI and nI2 can be dropped:
+stopifnot(identical(sort(as.integer(nI)), sort(as.integer(nI2))), 
+          identical(sort(as.integer(nI)), sort(as.integer(numInteractions))))
+rm(list=c("nI", "nI2"))
+ 
+## need to find homodimers
+
+numCB <- c(NA,NA,NA,NA,NA,NA,NA,600,589,165,1993,2357)
+numTB <- c(6604,31,22,100,1,6604,192,725,1739,165,6466,4562)
+
+EDA <- data.frame(
+ "Ref."=I(paste("\\cite{", dNames, "}", sep="")),
+ VB=numVB,
+ CB=numCB,
+ TB=numTB,
+ "VB/TB"=round(numVB/numTB, digit=2),
+ VP=numVP,
+ VBP=numVBP,
+ "VBP/BP"=round(numVBP/numVB, digit=2),
+ "VP/VB"=round(numVP/numVB,digit=2),
+ "TI"=numInteractions,
+"TI/VB"=round(numInteractions/numVB,digit=2), 
+check.names=FALSE,  row.names=dNames)
+
+xtable(EDA, display = c("s","s","d","d", "d","f", "d", "d", "f", "f", "d", "f"), 
+       label = "ta:viaBaits", 
+       caption="A general overview of seven Y2H and five AP-MS experiments:
+                VB - the number of viable baits; CB - the number of 
+                cloned (hybridized) baits 
+                if available; TB - the 
+                total number of baits; VB/TB; 
+                VP - the number of viable prey; VBP - the number of proteins observed
+                as both bait and prey;
+                VBP/VB; VP/VB, TI - the total number of 
+                interactions observed; TI/VB.", 
+       tabular.environment="longtable", floating=FALSE, 
+       size="small")
+
+
+@
+
 \begin{document}
 
 %----------------------------------------------------------------------
 \title{Supplementary Material for "Coverage and Error Models of 
-  Protein-Protein Interactin Data by Directed Graph Analysis"}
+  Protein-Protein Interaction Data by Directed Graph Analysis"}
 % ---------------------------------------------------------------------
 
 \author{Tony Chiang 
@@ -125,15 +185,6 @@ data. Each dataset is stored in \Rpackage{ppiData} as a directed
 graph object.
 
 
-<<ppiData, echo=FALSE, results=hide>>=
-library("ppiData")
-get(bpExperimentNames[8])
-bpGraphs = new.env(parent=globalenv(), hash=FALSE)
-data(list=bpExperimentNames, envir=bpGraphs)
-for(j in ls(bpGraphs))
-  assign(j, eval(get(j, env=bpGraphs)), env=bpGraphs)
-@ 
-
 The vector \emph{bpExperimentNames} contains the names to each 
 of the digraph objects. In addition, two list objects (called
 \emph{viableBaits} and \emph{viablePrey}) contain the viable
@@ -176,6 +227,19 @@ respectively modulo self-loops (i.e homomers). From these
 two lists, we were able to find the set theoretic intersections
 of the viable baits (VB) and viable prey (VP) per experiment to 
 ascertain the viable bait/prey (VBP) populations. 
+
+<<egKrogan06, fig=TRUE, width=3, height=3.5, prefix=FALSE, include=FALSE, echo=FALSE, results=hide>>=
+if(!exists("egKrogan06"))
+  load("egKrogan06.rda")
+
+par(mai=rep(0,4), lwd=2)
+stopifnot(identical(nodes(egKrogan06), c("YAL005C", "YBR092C", "YBR118W", "YPR190C")))
+trivialnames = c("SSA1", "PHO3", "TEF2", "RPC82C")
+plot(egKrogan06, "dot", nodeAttrs=makeNodeAttrs(egKrogan06, 
+  fillcolor=brewer.pal(9, "Pastel1")[c(2, 9, 2, 2)],
+  label=trivialnames, width="3", height="1.2",
+  shape="ellipse"))
+@ 
 
 <<vbp>>=
 vbp <- mapply(intersect, viableBaits, viablePrey)
@@ -247,6 +311,48 @@ yeast ORFs. This allowed us to build bar charts to gauge the
 proportion of the yeast interactome tested by each 
 experimental dataset. 
 
+<<fig1, fig=TRUE, width=6, height=4, prefix=FALSE, include=FALSE, echo=FALSE, results=hide>>=
+
+wh <- c(6, 7, 8, 11, 10, 12)
+tot <- 6466
+
+EDAsub <- 
+    with(EDA, 
+         data.frame(Expt = rownames(EDA),
+                    VB   = VB - VBP,
+                    VBP  = VBP,
+                    VP   = VP - VBP,
+                    unt  = tot - (VB + VP - VBP)))
+
+bcol <- c(brewer.pal(9, "Pastel1")[9], brewer.pal(12, "Paired")[1:3])[c(2, 3, 4, 1)]
+
+bc <- barchart(reorder(Expt, -unt) ~ VB + VBP + VP + unt, 
+             data = EDAsub, stack = TRUE,
+             auto.key = 
+             list(text = c("Viable Bait only", "Both Viable Prey and Bait", "Viable Prey only", "Absent"),
+                  columns = 1, adj = 1), 
+             xlab = "Number of proteins",
+             par.settings = list(superpose.polygon = list(border = "transparent", col = bcol )))
+
+plot(bc)
+@ 
+     \begin{figure}
+       \centering
+       \subfigure{\includegraphics[width=10cm]{fig1.pdf}}
+       \caption{
+         \label{fig:piecharts}{
+           The number of proteins probed in 
+           different experiments. Colored in light blue, the viable baits (VB) 
+           are those proteins
+           tested as baits which found at least one other interacting 
+           partner. Colored Green, the viable prey (VP) are those proteins tested as
+           prey which were found by a viable bait. Viable bait/prey
+           (VBP) are proteins which are simultaneously VB and VP and colored in
+           dark blue. The remaining proteins (grey) were either not tested 
+           or failed to show an interaction with any other protein
+           in the experiment. }
+       }
+     \end{figure}
 
 \subsection{Hypergeometric Testing}
 We wanted to ascertain if the viably tested proteins showed
@@ -564,6 +670,7 @@ For a more illuminating visual effect, we have perturbed the data on each
 point of the figures. This perturbation shows the relative concentration 
 of data for each point in each of the figures. 
 
+
 \include{unrecipInOutDistribIncludes}
 
 \subsection{Logistic Regressions}
@@ -777,6 +884,78 @@ do.call(rbind,
 
 ##
 @ 
+
+In addition to the Logistic Regressions, we plotted the adjacency matrix diagram of 
+of the bait/prey interactions in two different ways: 1. the rows and columns 
+randomly ordered and 2. the rows and columns ordered by ascending CAI. 
+
+<<GavinMat, include=FALSE, echo=FALSE, results=hide>>=
+
+experiment <- "Gavin2006BPGraph"
+## experiment <- "Krogan2006BPGraph"
+
+keep <- vbp[[experiment]] ## VBP only
+
+### The following is interesting, in the sense that it gives 
+### different-looking things in Krogan2006 and Gavin2006 
+
+## keep <- viablePrey[[experiment]] 
+
+smat <- as(get(experiment), "sparseMatrix")[keep, keep]
+ord.CAI <- order(proteinProperties[rownames(smat), "cai"])
+ord.random <- sample(seq_len(nrow(smat)))
+
+
+mat.random <- 
+
+    image((smat - smat * t(smat))[ord.random, ord.random],
+          aspect = "iso",
+          xlab = "Prey",
+          ylab = "Bait",
+          main = "Random Order", 
+          colorkey = FALSE, sub = "")
+          
+mat.CAI <- 
+
+    image((smat - smat * t(smat))[ord.CAI, ord.CAI],
+          aspect = "iso",
+          xlab = "Prey",
+          ylab = "Bait",
+          main = "Ordered By Ascending CAI", 
+          colorkey = FALSE, sub="")
+
+
+##
+@ 
+
+
+\begin{figure}
+  \centering
+
+<<GavinImages, fig=TRUE, width=10, height=7, echo=FALSE>>=
+par(mfcol = c(1,2))
+plot(mat.random, split = c(1, 1, 2, 1), more = TRUE)
+plot(mat.CAI, split = c(2, 1, 2, 1), more = FALSE)
+@ 
+
+       \caption{
+         \label{fig:caiplots}{
+           These plots present a view of the adjacency matrix for the VBP
+           derived from the \cite{Gavin2006} experimental data set.
+           An interaction between bait $b$ and prey $p$ is recorded by a dark 
+           pixel in $(b,p)^{th}$ position of the matrix. The left panel has the
+           rows randomly permuted (and the columns sorted accordingly) while the
+           left panel has ordered the proteins according to their CAI value. 
+           The patterns in the left panel indicate an association 
+           between CAI and the number of bait to prey interactions. In fact, 
+           we can determine that the relationship is based on proteins with 
+           large un-reciprocated in-degree since the right panel shows a dark 
+           vertical band. Had unreciprocated out-degree also been associated 
+           with CAI then there would be a similar horizontal band reflected
+           across the main diagonal of the matrix.
+           }
+       }
+     \end{figure}
 
 \subsection{Fisher's Exact Test Across Experiment}
 
