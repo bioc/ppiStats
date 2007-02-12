@@ -10,10 +10,8 @@ stochastic or systematic errors}
   either affected by systematic or stochastic error.
 }
 \usage{
-idSystematic(bpMat, viable, bpGraph = FALSE, pThresh = 0.01, pLevels =
-c(1e-06, 1e-04, 0.01))
-idStochastic(bpMat, bpGraph = FALSE, pThresh = 0.01, pLevels =
-c(1e-06, 1e-04, 0.01))
+idSystematic(bpMat, viable, bpGraph = FALSE, pThresh = 0.01, pLevels = 1e-4, prob=0.5)
+idStochastic(bpMat, bpGraph = FALSE, pThresh = 0.01, pLevels = 1e-4, prob=0.5)
 }
 
 \arguments{
@@ -27,6 +25,7 @@ c(1e-06, 1e-04, 0.01))
   or systematic errors}
   \item{pLevels}{A numeric vector. It gives the levels to calculate the
     countours of the function in p in the (n-in, n-out)-plane}
+  \item{prob}{A numeric. The bias of the coin in the call to pbinom.}
 }
 
 \value{

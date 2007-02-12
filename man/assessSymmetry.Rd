@@ -13,7 +13,7 @@
 }
 \usage{
 assessSymmetry(bpMat, bpGraph = FALSE,
-  pLevels = c(1e-06, 1e-04, 0.01))
+  prob=0.5, pLevels = 1e-4)
 }
 
 \arguments{
@@ -23,6 +23,8 @@ assessSymmetry(bpMat, bpGraph = FALSE,
     as a graphNEL.}
   \item{pLevels}{A numeric vector. It gives the levels to calculate the
     countours of the function in p in the (n-in, n-out)-plane}
+  \item{prob}{A numeric. The bias of the coin used in the function
+    pbinom call.}		
 }
 
 \value{

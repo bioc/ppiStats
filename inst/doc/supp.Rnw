@@ -1,3 +1,11 @@
+%
+% NOTE -- ONLY EDIT THE .Rnw FILE!!!  The .tex file is
+% likely to be overwritten.
+%
+% \VignetteIndexEntry{Using the package ppiStats}
+%\VignetteDepends{}
+%\VignettePackage{ppiStats}
+
 \documentclass[11pt]{article}    
 
 %----------------------------------------------------------------------
