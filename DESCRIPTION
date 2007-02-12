@@ -1,6 +1,6 @@
 Package: ppiStats
 Title: Protein-Protein Interaction Statistical Package
-Version: 1.1.13
+Version: 1.1.14
 Author: Tony Chiang <tchiang@fhcrc.org>
 Description: Package to analyze Bait to Prey Data Sets
 Depends: GO, GOstats, YEAST, graph, Category
