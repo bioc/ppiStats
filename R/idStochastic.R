@@ -4,7 +4,7 @@ idStochastic <- function(bpMat, bpGraph=FALSE, pThresh=0.01,
     if(bpGraph)
       bpMat <- as(bpMat, "matrix")
 
-    f <- assessSymmetry(bpMat, pLevels = pLevels, prob=prob)
+    f <- assessSymmetry(bpMat, bpGraph = bpGraph, pLevels = pLevels, prob=prob)
     sel <- (f$p>pThresh)
     return(names(sel)[sel])
     

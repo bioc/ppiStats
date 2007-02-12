@@ -587,24 +587,12 @@ is also contained in the R package \Rpackage{ppiStats}. In addition,
 the function also calculates the contours of the function 
 $p$ in the $(n_{i}, n_{o})$-plane. These will be used in the plots.
 
-<<assessSymmetry, echo=FALSE, results=hide>>=
-## pLevels = c(1e-6, 1e-4, 1e-2)
-pLevels = 1e-4
 
-assessSymmetry = function(m) {
-  deg = getDegrees(m) 
-  nunrec = deg[, "no"]+deg[, "ni"]
-  nmini  = pmin(deg[, "no"], deg[, "ni"])
-  p = pbinom(nmini, size=nunrec, prob=0.5)
-  p = pmin(2*p, 1) 
-  nmax = 2*max(deg[, "no"], deg[, "ni"])
-  contours = sapply(pLevels, qbinom, size=0:nmax, prob=0.5)
-  list(deg=deg, p=p, contours=contours)
-} 
-@ 
+
+
 
 <<scpFun, echo=FALSE, results=hide>>=
-
+pLevels = 1e-4
 stopifnot(length(pLevels)==1)## this particular pvalColor function assumes that
 pvalColors = function(x) brewer.pal(3, "Paired")[1+(x<pLevels)]
   
