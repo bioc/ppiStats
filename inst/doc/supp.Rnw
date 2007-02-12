@@ -4,7 +4,7 @@
 \usepackage{subfigure}
 \usepackage{graphicx}
 \usepackage{amsmath}
-
+\usepackage{rotating}
 %% instead of \usepackage{Sweave}
 \RequirePackage[T1]{fontenc}
 \RequirePackage{graphicx,ae,fancyvrb}
@@ -94,21 +94,6 @@ EDA <- data.frame(
 "TI/VB"=round(numInteractions/numVB,digit=2), 
 check.names=FALSE,  row.names=dNames)
 
-xtable(EDA, display = c("s","s","d","d", "d","f", "d", "d", "f", "f", "d", "f"), 
-       label = "ta:viaBaits", 
-       caption="A general overview of seven Y2H and five AP-MS experiments:
-                VB - the number of viable baits; CB - the number of 
-                cloned (hybridized) baits 
-                if available; TB - the 
-                total number of baits; VB/TB; 
-                VP - the number of viable prey; VBP - the number of proteins observed
-                as both bait and prey;
-                VBP/VB; VP/VB, TI - the total number of 
-                interactions observed; TI/VB.", 
-       tabular.environment="longtable", floating=FALSE, 
-       size="small")
-
-
 @
 
 \begin{document}
@@ -176,7 +161,7 @@ We begin by detailing the methods by which we obtained the 12 protein
 interaction datasets. We wanted data that had two properties: 1. 
 information on the bait/prey data is preserved and 2. the prey population 
 is documented as genome-wide. We downloaded the protein 
-interaction data of \cite{Ito2001. Uetz2000, Zhao2005, Cagney2001, 
+interaction data of \cite{Ito2001, Uetz2000, Zhao2005, Cagney2001, 
 Tong2002, Hazbun2003, Gavin2006} from the \emph{IntAct} repository. 
 We obtained \cite{Gavin2002, Ho2002, Krogan2004, Krogan2006} from their 
 primary sources. Having obtained the bait/prey protein interaction
@@ -204,25 +189,53 @@ plot(egKrogan06, "dot", nodeAttrs=makeNodeAttrs(egKrogan06,
 \centering
 \includegraphics[width=45mm]{egKrogan06}
 \caption{\label{fig:egKrogan06}% 
-The interaction data between four
-selected proteins from Krogan et al.'s experiment~\cite{Krogan2006}. The
-bi-directional edge between the ATPase \textit{SSA1} and the translational 
-elongation factor \textit{TEF2}
-indicates that either one as a bait pulled down the other one as a
-prey. The directed edge from \textit{RPC82}, a subunit of RNA polymerase III, 
-to \textit{SSA1} indicates that \textit{RPC82} as a bait pulled down 
-\textit{SSA1}, but not vice versa. 
-Another unreciprocated edge goes from
-the phosphatase \textit{PHO3} to\textit{TEF2}.  An investigation of the dataset
-shows that \textit{PHO3}, which localizes in the periplasmatic space, 
-was not reported in any interaction as a prey, while \textit{RPC82C} was.
-In the interpretation of the data, we would have most confidence that there is a 
-real interaction between \textit{SSA1} and \textit{TEF2}. We can differentiate between
-the two unreciprocated interactions: the one
-between \textit{RPC82C} and \textit{SSA1} has been bi-directionally
-tested, but only found once, while the other one has only been uni-directionally 
-tested and found.}
+  The graph shows the interaction data between four selected proteins from 
+  Krogan et al.'s experiment~\cite{Krogan2006}. The bi-directional edge 
+  between the ATPase \textit{SSA1} and the translational elongation factor 
+  \textit{TEF2} indicates that either one as a bait pulled down the 
+  other one as a prey. The directed edge from \textit{RPC82}, a subunit 
+  of RNA polymerase III, to \textit{SSA1} indicates that \textit{RPC82} 
+  as a bait pulled down \textit{SSA1}, but not vice versa. Another 
+  unreciprocated edge goes from the phosphatase \textit{PHO3} to
+  \textit{TEF2}.  An investigation of the dataset shows that \textit{PHO3}, 
+  which localizes in the periplasmatic space, was not reported in any 
+  interaction as a prey, while \textit{RPC82C} was. In the interpretation 
+  of the data, we would have most confidence that there is a real 
+  interaction between \textit{SSA1} and \textit{TEF2}. We can differentiate 
+  between the two unreciprocated interactions: the one between \textit{RPC82C} 
+  and \textit{SSA1} has been bi-directionally tested, but only found once, 
+  while the other one has only been uni-directionally tested and found.
+}
 \end{figure}
+
+To make the dialogue clear, we first define some terms that will be 
+used throughout this document:
+
+\begin{itemize}
+
+\item[] \textbf{Bait:} 
+  Any protein sampled for the purposes of ascertaining the 
+  proteins with which it interacts. 
+  The set of baits used in an experiment is the bait population. 
+\item[] \textbf{Cloned Bait:} 
+  Any bait that was successfully cloned in a yeast cell with either
+  a binding domain (Y2H) or a specified tag (AP-MS). 
+\item[] \textbf{Viable Bait:} 
+  Any cloned bait that was observed to detect one or more proteins (prey). 
+\item[] \textbf{Prey:} 
+  Any protein that is tested against the bait proteins. The set of prey used 
+  in an experiment is the prey population. 
+\item[] \textbf{Cloned Prey:} 
+  For Y2H, any prey that was successfully cloned
+  in a yeast cell with an activation domain. 
+\item[] \textbf{Viable Prey:} 
+  Any prey that was found to interact with a viable bait. 
+  Sometimes referred to as a \textit{hit}.
+\item[] \textbf{Viable bait-prey:} 
+  A protein that is both a viable bait and a 
+  viable prey.
+\end{itemize}
+
 
 The vector \emph{bpExperimentNames} contains the names to each 
 of the digraph objects. In addition, two list objects (called
@@ -272,9 +285,32 @@ vbp <- mapply(intersect, viableBaits, viablePrey)
 @  
 
 From SGD, we used 6466 as the number of known and characterized 
-yeast ORFs. This allowed us to build bar charts to gauge the
-proportion of the yeast interactome tested by each 
+yeast ORFs. This allowed us to build bar charts (cf Figure~\ref{fig:barcharts})
+to gauge the proportion of the yeast interactome tested by each 
 experimental dataset. 
+
+     \begin{figure}
+       \centering
+       \subfigure{\includegraphics[width=10cm]{fig1.pdf}}
+       \caption{
+         \label{fig:barcharts}{
+           This bar chart shows the proportion of proteins sampled either as a 
+           viable bait (VB), a viable prey (VP), or as both (VBP). With the 
+           exception of the Krogan et al.~\cite{Krogan2006}'s data, the other
+           eleven show large portions of the yeast genome which did not 
+           participate in any positive interactions. Without additional 
+           information, there is little we can do to elucidate whether these
+           proteins were tested but inactive for all tests, or whether these 
+           proteins were not tested.            
+         }
+       }
+     \end{figure}
+
+In addition to the bar chart, we were able to generate a number of 
+sampling statistics that are otherwise undocumentd on a per experiment
+setting (cf Table~\ref{table:perexpt}), as well as between experiments
+of the same type, i.e. those which used the same system to test
+interactions (cf Table~\ref{table:betweenexpt}). 
 
 <<fig1, fig=TRUE, width=6, height=4, prefix=FALSE, include=FALSE, echo=FALSE, results=hide>>=
 
@@ -301,23 +337,52 @@ bc <- barchart(reorder(Expt, -unt) ~ VB + VBP + VP + unt,
 
 plot(bc)
 @ 
-     \begin{figure}
-       \centering
-       \subfigure{\includegraphics[width=10cm]{fig1.pdf}}
-       \caption{
-         \label{fig:piecharts}{
-           The number of proteins probed in 
-           different experiments. Colored in light blue, the viable baits (VB) 
-           are those proteins
-           tested as baits which found at least one other interacting 
-           partner. Colored Green, the viable prey (VP) are those proteins tested as
-           prey which were found by a viable bait. Viable bait/prey
-           (VBP) are proteins which are simultaneously VB and VP and colored in
-           dark blue. The remaining proteins (grey) were either not tested 
-           or failed to show an interaction with any other protein
-           in the experiment. }
-       }
-     \end{figure}
+
+Before we conduct any other statistical tests on the protein interaction data,
+we list the definitions of some standard statistical terms in 
+Table~\ref{tab:errorterms}. Any of these terms used throughout this document 
+(as well as the article \emph{Coverage and Error Models in Protein Interaction
+Data by Directed Graph Analysis}) corresponds to the given definitions.
+
+\begin{table}
+\begin{tabular}{p{0.30\textwidth}p{0.05\textwidth}p{0.55\textwidth}}
+\hline
+\multicolumn{3}{c}{\textbf{Error Statistics}} \\\hline\hline
+True Positives& TP & Number of cases in which a true interaction is 
+experimentally observed.\\
+True Negatives& TN & Number of cases in which two proteins do not
+interact, their interaction is tested, but not observed.\\
+False Positives& FP & Number of cases in which two proteins do not 
+interact, but an interaction is reported by the experiment.\\
+False Negatives& FN & Number of cases in which a true interaction is
+experimentally tested and not found.\\
+\raggedright{True Tested Interactions}& P & TP+FN\\
+\raggedright{True Tested Non-interactions} & N & TN+FP\\
+\raggedright{False Positive Rate}&$p_{\mbs{FP}}$& Probability 
+that a truely absent interaction is detected. It can be 
+estimated by FP / N.\\
+\raggedright{False Negative Rate}&$p_{\mbs{FN}}$& Probability 
+that a true interaction is not detected. It can be estimated  by
+FN / P.\\
+Sensitivity&& Probability that a true interaction is detected. 
+It can be estimated by TP / P.\\
+Specificity&& Probability that a truely absent interaction is not 
+detected, estimated by TN / N.\\
+\raggedright{False Discovery Rate}&FDR&Informally, the expectated value
+of FP/(TP+FP)~\cite{Storey2002}.\\
+\raggedright{Positive Predictive Value}&PPV& Probability that 
+an observed interaction is indeed true. It can be estimated 
+by TP / (TP+FP).\\
+\raggedright{Negative Predictive Value}&NPV& Probability that 
+an observed non-interaction is truely absent. It can be estimated 
+by TN / (TN+FN).\\ \hline\\[-2mm]
+\end{tabular}
+\caption{\label{tab:errorterms}% 
+Standard definitions of various error
+terms \cite{MethodsObsEpi}. The probabilities are conditional on that 
+the interaction is tested.}.
+\end{table}
+
 
 \subsection{Hypergeometric Testing}
 We wanted to ascertain if the viably tested proteins showed
@@ -898,14 +963,15 @@ plot(mat.CAI, split = c(2, 1, 2, 1), more = FALSE)
        \caption{
          \label{fig:caiplots}{
            These plots present a view of the adjacency matrix for the VBP
-           derived from the \cite{Gavin2006} experimental data set.
+           derived from the Gavin et al.~\cite{Gavin2006} experimental data set.
            An interaction between bait $b$ and prey $p$ is recorded by a dark 
            pixel in $(b,p)^{th}$ position of the matrix. The left panel has the
-           rows randomly permuted (and the columns sorted accordingly) while the
-           left panel has ordered the proteins according to their CAI value. 
-           The patterns in the left panel indicate an association 
-           between CAI and the number of bait to prey interactions. In fact, 
-           we can determine that the relationship is based on proteins with 
+           rows and columns randomly ordered while the
+           right panel has the rows and columns ordered by ascending
+           values of each protein's condon adaptation index (CAI).
+           Contrasting these two figures, we can ascertain that there is 
+           a relationship between bait/prey interactions and CAI. 
+           The relationship is based on proteins with 
            large un-reciprocated in-degree since the right panel shows a dark 
            vertical band. Had unreciprocated out-degree also been associated 
            with CAI then there would be a similar horizontal band reflected
@@ -1391,8 +1457,18 @@ systematic bias and recalibrated the solution curves. These
 are rendered in the bottom two plots.
 The result of this is plotted in Figure~\ref{fig-pfppfnAll2gether}. 
 
-\myincfig{fig-pfppfnAll2gether}{0.75\textwidth}{The solution
-  manifolds (all datasets in one plot, unfiltered data).}
+\myincfig{fig-pfppfnAll2gether}{0.75\textwidth}{
+  These figures detail the error statistics for each of the datasets.
+  Plot $a$ generates the 1-dimensional solution curves for $(\pfp,\pfn)$
+  parametrized by $n$ for the AP-MS datasets. Plot $b$ generates similar
+  1-dimensional curves but for the Y2H datasets. Plots $c$ and $d$ 
+  recalculates these solution curves for the AP-MS and Y2H respectively.
+  These recalculations are done by setting aside those interactions 
+  which appear to be affected by a systeamtic bias of the experimental 
+  assay. Having set aside those interactions, the range for $\pfp$ is
+  substantially constrained for the solution curves characterizing
+  \cite{Gavin2006, Krogan2006} implying that systematic errors may 
+  potentially have large effects on $\pfp$.}
 
 \section{Cross Data Integration and Analysis}
 We have shown that protein interaction analysis can be measured
@@ -1469,19 +1545,29 @@ grid.rect(x = min(secondx),
 grid.rect()
 @ 
 
-\myincfig{matrixPlot}{\textwidth}{Adjacency matrix representing
-the tested interactions of two separate experiments. The light 
-blue square shows the set of tested interactions for experiment
-1 while the light green shows the tested interactions for 
-experiment 2. The dark blue square indicates those tested
-interactions common to both experiments while the gray shaded
-area were untested in both.}
+\myincfig{matrixPlot}{\textwidth}{
+  A schematic representation of the interactome coverage of two 
+  protein interaction experiments. The adjacency matrix of the 
+  complete interactome is represented by the large square. Experiment 
+  1 covers a certain set of proteins as baits (rows covered by the
+  light blue vertical line) and as prey (columns covered by the light 
+  blue horizontal line). The tested interactions for Experiment 1 are 
+  contained within the light blue rectangle. Similarly, 
+  Experiment 2 covers another set of proteins and tests for a set of 
+  interactions contained in the light green rectangle. The intersection 
+  of the rectangles, the dark blue area, are the bait to prey interactions 
+  tested by both experiments, and the union are the interactions tested 
+  by at least one of the experiments. Note that the interactions in the 
+  light gray area were tested by \emph{neither} experiment either because
+  there are missing tested prey (upper right corner) or missing tested
+  baits (lower left corner). The interactions in the white region are also
+  tested by \emph{neither} experiment because both the baits and the prey
+  were not tested.}
 
 As an example we show how sampling is fundamental for 
 inter-experimental analysis. 
 
-The
-possible pitfalls of naive comparisons between two experimental
+The possible pitfalls of naive comparisons between two experimental
 datasets are depicted in Figure~\ref{matrixPlot}. %~\ref{fig:matPlot}. 
 The interactions in the intersection of the rectangles (darker blue) 
 were tested by both; the interactions in the light blue and green 
@@ -1497,6 +1583,77 @@ the error rates have a more meaningful interpretation. Ultimately,
 there are still many more steps needed to integrate datasets,
 and we provide a few necessary components.
 
+\begin{sidewaystable}[p]
+\begin{center}
+\begin{tabular}{rlrrrrrrrrrr}
+  \hline
+ & Ref. & VB & CB & TB & VB/TB & VP & VBP & VBP/BP & VP/VB & TI & TI/VB \\
+  \hline
+Ito2001 & \cite{Ito2001} & 1522 &  & 6604 & 0.23 & 2493 & 773 & 0.51 & 1.64 & 4524 & 2.97 \\
+  Cagney2001 & \cite{Cagney2001} &  19 &  &  31 & 0.61 &  40 &  11 & 0.58 & 2.11 &  54 & 2.84 \\
+  Tong2002 & \cite{Tong2002} &  20 &  &  22 & 0.91 &  59 &   5 & 0.25 & 2.95 & 115 & 5.75 \\
+  Hazbun2003 & \cite{Hazbun2003} &  66 &  & 100 & 0.66 & 1940 &  28 & 0.42 & 29.39 & 2524 & 38.24 \\
+  Zhao2005 & \cite{Zhao2005} &   1 &  &   1 & 1.00 &  90 &   0 & 0.00 & 90.00 &  90 & 90.00 \\
+  Uetz2000-1 & \cite{Uetz2000} & 508 &  & 6604 & 0.08 & 630 & 142 & 0.28 & 1.24 & 952 & 1.87 \\
+  Uetz2000-2 & \cite{Uetz2000} & 139 &  & 192 & 0.72 & 400 &  36 & 0.26 & 2.88 & 524 & 3.77 \\
+  Gavin2002 & \cite{Gavin2002} & 455 & 600 & 725 & 0.63 & 1179 & 271 & 0.60 & 2.59 & 3419 & 7.51 \\
+  Ho2002 & \cite{Ho2002} & 493 & 589 & 1739 & 0.28 & 1316 & 231 & 0.47 & 2.67 & 3687 & 7.48 \\
+  Krogan2004 & \cite{Krogan2004} & 153 & 165 & 165 & 0.93 & 483 & 151 & 0.99 & 3.16 & 1132 & 7.40 \\
+  Gavin2006 & \cite{Gavin2006} & 1752 & 1993 & 6466 & 0.27 & 1790 & 991 & 0.57 & 1.02 & 19105 & 10.90 \\
+  Krogan2006 & \cite{Krogan2006} & 2264 & 2357 & 4562 & 0.50 & 5323 & 2226 & 0.98 & 2.35 & 63360 & 27.99 \\
+   \hline
+\end{tabular}
+\caption{Overview of seven Y2H and five AP-MS experiments.
+Abbreviations: VB - the number of viable baits; 
+CB - the number of cloned (hybridized) baits, if available; 
+TB - the total number of baits; 
+VP - the number of viable prey; 
+VBP - the number of proteins observed as both bait and prey;
+TI - the total number of interactions observed.}
+\label{table:perexpt}
+\end{center}
+\end{sidewaystable}
+
+\begin{sidewaystable}[p]
+\begin{center}
+
+\begin{tabular}{rrrrrrrr}
+  \hline
+a) & Ito2001 & Cagney2001 & Tong2002 & Hazbun2003 & Zhao2005 & Uetz2000-1 & Uetz2000-2 \\
+  \hline
+Ito2001 &  &   9 &   7 &  24 &   1 & 224 &  47 \\
+  Cagney2001 &  28 &  &   0 &   0 &   0 &   7 &   3 \\
+  Tong2002 &  34 &   0 &  &   0 &   0 &   4 &   7 \\
+  Hazbun2003 & 856 &  14 &  25 &  &   0 &  15 &  12 \\
+  Zhao2005 &  43 &   1 &   2 &  38 &  &   0 &   0 \\
+  Uetz2000-1 & 388 &  14 &  22 & 272 &  15 &  &  36 \\
+  Uetz2000-2 & 200 &   9 &  26 & 204 &  13 & 108 &  \\
+   \hline
+\end{tabular}
+
+\vspace*{4mm}
+
+\begin{tabular}{rrrrrr}
+  \hline
+b) & Gavin2002 & Ho2002 & Krogan2004 & Gavin2006 & Krogan2006 \\
+  \hline
+Gavin2002 &  &  82 &  51 & 442 & 334 \\
+  Ho2002 & 516 &  &  25 & 222 & 286 \\
+  Krogan2004 & 299 & 246 &  & 121 & 151 \\
+  Gavin2006 & 1143 & 717 & 371 &  & 1128 \\
+  Krogan2006 & 1149 & 1277 & 478 & 1732 &  \\
+   \hline
+\end{tabular}
+\caption{\label{table:betweenexpt}%
+Pair-wise comparison of data sets. a) Y2H datasets, b) APMS datasets. 
+Each table shows two distinct statistics: 
+the values above the diagonal give the number of common viable baits 
+between each pair of experiments, 
+the values below the diagonal give the number of common viable prey.}
+\end{center}
+\end{sidewaystable}
+
+@ 
 
 \bibliographystyle{plain} 
 \bibliography{proteinReview}

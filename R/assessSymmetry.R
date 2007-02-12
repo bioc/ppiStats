@@ -1,5 +1,5 @@
 assessSymmetry = function(bpMat, bpGraph = FALSE,
-  pLevels = c(1e-06, 1e-04, 0.01), prob=0.5) {
+  	prob=0.5) {
     if (bpGraph){
         bpMat <- as(bpMat, "matrix")
     }
