@@ -116,8 +116,8 @@ check.names=FALSE,  row.names=dNames)
 %  \email{Tony Chiang - tchiang@ebi.ac.uk}
 \and Denise Scholtens %$^3$%
 %       \email{Denise Scholtens - dscholtens@northwestern.edu}\
-\and Deepayaan Sarkar% $^2$%
-%      \email{Deepayaan Sarkar - dsarkar@fhcrc.org}\and
+\and Deepayan Sarkar% $^2$%
+%      \email{Deepayan Sarkar - dsarkar@fhcrc.org}\and
 \and Robert Gentleman%$^2$%
 %       \email{Robert Gentleman - rgentlem@fhcrc.org}\and
 \and Wolfgang Huber%$^1$%
