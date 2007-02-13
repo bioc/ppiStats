@@ -12,7 +12,8 @@
 \definecolor{WildStrawberry}{rgb}{0.69803922,0.09411765,0.16862745}
 \usepackage[%
 baseurl={http://www.bioconductor.org},%
-pdftitle={Supplementary Material for "Coverage and Error Models of Protein-Protein Interaction Data by Directed Graph Analysis"},%
+pdftitle={Supplementary Material for "Coverage and Error Models of 
+  Protein-Protein Interaction Data by Directed Graph Analysis"},%
 pdfauthor={Tony Chiang},%
 pdfsubject={ppiStats},%
 pdfkeywords={Bioconductor},%
@@ -85,8 +86,10 @@ dNames <- sub("-$", "", sub("BPGraph", "-", bpExperimentNames))
 numVB <- listLen(viableBaits)
 numVP <- listLen(viablePrey)
 numVBP <- mapply(function(x,y) {length(intersect(x,y))}, viableBaits, viablePrey)
-nI  <- unlist(eapply(bpGraphs, function(x) {sum(sapply(x@edgeL, function(y) {length(y[[1]])}))}))[bpExperimentNames]
-nI2 <- unlist(eapply(bpGraphs, function(g) {d=degree(g); s=sum(d$inDegree); stopifnot(s==sum(d$outDegree)); return(s)}))
+nI  <- unlist(eapply(bpGraphs, function(x) 
+                     {sum(sapply(x@edgeL, function(y) {length(y[[1]])}))}))[bpExperimentNames]
+nI2 <- unlist(eapply(bpGraphs, function(g) 
+                     {d=degree(g); s=sum(d$inDegree); stopifnot(s==sum(d$outDegree)); return(s)}))
 numInteractions <- unlist(eapply(bpGraphs, function(g) sum(degree(g)$inDegree)))
 
 ## eventually, nI and nI2 can be dropped:
@@ -100,7 +103,7 @@ numCB <- c(NA,NA,NA,NA,NA,NA,NA,600,589,165,1993,2357)
 numTB <- c(6604,31,22,100,1,6604,192,725,1739,165,6466,4562)
 
 EDA <- data.frame(
- "Ref."=I(paste("\\cite{", dNames, "}", sep="")),
+ 
  VB=numVB,
  CB=numCB,
  TB=numTB,
@@ -114,7 +117,7 @@ EDA <- data.frame(
 check.names=FALSE,  row.names=dNames)
 
 @
-
+%"Ref."=I(paste("\\cite{", dNames, "}", sep="")),
 \begin{document}
 
 %----------------------------------------------------------------------
@@ -186,21 +189,22 @@ data. Each dataset is stored in \Rpackage{ppiData} as a directed
 graph object. As an example, we have selected 4 proteins from the 
 \cite{Krogan2006} dataset and rendered the vertex induced subgraph in
 Figure~\ref{fig:egKrogan06}.
+<<egKrogan06, fig=TRUE, width=3, height=3.5, prefix=FALSE, include=FALSE, echo=FALSE>>=
 
-<<egKrogan06, fig=TRUE, width=3, height=3.5, prefix=FALSE, include=FALSE, echo=FALSE, results=hide>>=
-if(!exists("egKrogan06"))
-  load("egKrogan06.rda")
+proteinWanted <- c("YAL005C","YBR092C","YBR118W","YPR190C")
+cache(krogM <- as(get("Krogan2006BPGraph"), "matrix"))
+diag(krogM) <- 0
+cache(krogG <- as(krogM, "graphNEL"))
+subG <- subGraph(proteinWanted, krogG)
 
 par(mai=rep(0,4), lwd=2)
-stopifnot(identical(nodes(egKrogan06), c("YAL005C", "YBR092C", "YBR118W", "YPR190C")))
+stopifnot(identical(nodes(subG), c("YAL005C", "YBR092C", "YBR118W", "YPR190C")))
 trivialnames = c("SSA1", "PHO3", "TEF2", "RPC82C")
-plot(egKrogan06, "dot", nodeAttrs=makeNodeAttrs(egKrogan06, 
+plot(subG, "dot", nodeAttrs=makeNodeAttrs(subG, 
   fillcolor=brewer.pal(9, "Pastel1")[c(2, 9, 2, 2)],
   label=trivialnames, width="3", height="1.2",
   shape="ellipse"))
 @ 
-
-%
 \begin{figure}
 \centering
 \includegraphics[width=45mm]{egKrogan06}
@@ -253,10 +257,9 @@ used throughout this document:
 \end{itemize}
 
 
-%% FIXME: please use \Robject, \Rfunction etc. instead of \emph
 The vector \Robject{bpExperimentNames} contains the names to each 
 of the digraph objects. In addition, two list objects (called
-\emph{viableBaits} and \emph{viablePrey}) contain the viable
+\Robject{viableBaits} and \Robject{viablePrey}) contain the viable
 baits and viable prey for each experimental dataset respectively.
 To represent all the data uniformly, the identifier for 
 each protein is given by its corresponding Open Reading Frame
@@ -273,9 +276,7 @@ get(bpExperimentNames[8])
 In addition to \Rpackage{ppiData}, another R-data package, 
 \Rpackage{yeastExpData}, and the R package \Rpackage{ppiStats}
 were generated. \Rpackage{yeastExpData} contains R objects that
-describe yeast protein abundance, 
-% FIXME this is somewhat imprecise. Should say that this R object
-% contains a published dataset on protein abundance, and cite the reference.
+contains published data on protein abundance.
 yeast GFP fusion data, and 
 a R dataframe consisting of 33 other yeast protein properties
 obtained from SGD (the dataframe is called \Robject{proteinProperties}). 
@@ -327,12 +328,10 @@ experimental dataset.
      \end{figure}
 
 In addition to the bar chart, we were able to generate a number of 
-sampling statistics that are otherwise undocumentd on a per experiment
-% FIXME not clear what ``otherwise undocumentd on a per experiment
-% setting'' means, can you precisify (or remove)?
+sampling statistics on the Y2H and APMS datasets on a per experiment
 setting (cf Table~\ref{table:perexpt}), as well as between experiments
 of the same type, i.e. those which used the same system to test
-interactions (cf Table~\ref{table:betweenexpt}). 
+interactions (cf Table~\ref{ta:y2hComp} and Table~\ref{ta:apmsComp}). 
 
 <<fig1, fig=TRUE, width=6, height=4, prefix=FALSE, include=FALSE, echo=FALSE, results=hide>>=
 
@@ -424,15 +423,6 @@ The code written to conduct these hypergeometric tests has been
 supplied with the main article as an additional file. It can 
 also be found in the Script directory of the 
 \Rpackage{ppiStats} package.
-% FIXME: this is confusing - why isn't the code part of this script?
-% and if it is not, please give the exact name and location of the script
-% There is no Script directory in the ppiStats package.
-%
-% I don't like to idea of supplying lots of little scattered files to GB 
-%  - just give them the ppiStats_x.y.z.tar.gz file with everything in it 
-% at the proper place!
-
-
 
 \section{Systematic Bias}
 %--------------------------------------------------
@@ -617,10 +607,6 @@ is also contained in the R package \Rpackage{ppiStats}. In addition,
 the function also calculates the contours of the function 
 $p$ in the $(n_{i}, n_{o})$-plane. These will be used in the plots.
 
-
-
-
-
 <<scpFun, echo=FALSE, results=hide>>=
 pLevels = 1e-4
 stopifnot(length(pLevels)==1)## this particular pvalColor function assumes that
@@ -671,7 +657,7 @@ bpRed = new.env(parent=globalenv(), hash=FALSE)
 out = file("unrecipInOutDistribIncludes.tex", open="wt")
 
 for(name in ls(bpMat)) {
-  f = assessSymmetry(bpMat[[name]])
+  f = assessSymmetry(bpMat[[name]], pLevels=pLevels)
   sel = (f$p>=pThresh)
   assign(name, bpMat[[name]][sel, sel], envir=bpRed)
 
@@ -1170,31 +1156,19 @@ for(i in c(1, 10, 11)) {
   dens = density(z, adjust=2)
   plot.density(dens, main=paste("z-scores for ", dNames1[i], sep=""), 
     col="darkblue", xlab="z", xlim=xlim, lwd=2)
-  abline(v=c(0, dens$x[which.max(dens$y)]),
-         col=c("#808080", brewer.pal(4, "Paired")[2]), 
+  abline(v=0,
+         col="#808080", 
          lty=c(2,1,1), lwd=2)
-  #abline(v=c(0, median(z), shorth(z)), 
-  #       col=c("#808080", brewer.pal(4, "Paired")[c(2,4)]), 
-  #       lty=c(2,1,1), lwd=2)
 }
 @
 
 \myincfig{fig-zScoreDens}{\textwidth}{Density plots for the three largest
-bait/prey datasets.}
-% FIXME: 
-% 1. please explain what the various lines in this plot mean.
-% 2. do we really need to show median and shorth? What is the point that we
-%    are trying to make? Let's simplify and just present what actually need
-%    to make the argument, not other tangential stuff.
+bait/prey datasets with the zero-line.}
 
-For the three plots that appear to have unimodal distributions, we plotted 
+For three plots that appear to have either a strong positive
+or negative concentration of data points in the distributions, we plotted 
 their densities (Figure~\ref{fig-zScoreDens}). 
-% FIXME: the plot for Ito does not look unimodal! Please, we should not talk
-%  about submitting this paper this week and still have such howlers in there.
 
-With more data points, we can 
-better investigate these densities for possible biological associations. 
-% FIXME: what does that mean
 
 
 \newpage
@@ -1515,7 +1489,7 @@ firstx <- c(0, 0.6)
 firsty <- c(0, 0.6)
 secondx <- c(0.4, 0.9)
 secondy <- c(0.4, 0.9)
-colors <- c(brewer.pal(12, "Paired")[c(1,3,2)], "gray85")
+colors <- c(brewer.pal(12, "Paired")[c(4,10,6)], "gray85")
 lwd <- 2
 
 grid.newpage()
@@ -1584,10 +1558,10 @@ grid.rect()
   1 covers a certain set of proteins as baits (rows covered by the
   light blue vertical line) and as prey (columns covered by the light 
   blue horizontal line). The tested interactions for Experiment 1 are 
-  contained within the light blue rectangle. Similarly, 
+  contained within the green rectangle. Similarly, 
   Experiment 2 covers another set of proteins and tests for a set of 
-  interactions contained in the light green rectangle. The intersection 
-  of the rectangles, the dark blue area, are the bait to prey interactions 
+  interactions contained in the purple rectangle. The intersection 
+  of the rectangles, the red area, are the bait to prey interactions 
   tested by both experiments, and the union are the interactions tested 
   by at least one of the experiments. Note that the interactions in the 
   light gray area were tested by \emph{neither} experiment either because
@@ -1615,77 +1589,78 @@ the error rates have a more meaningful interpretation. Ultimately,
 there are still many more steps needed to integrate datasets,
 and we provide a few necessary components.
 
-\begin{sidewaystable}[p]
-\begin{center}
-\begin{tabular}{rlrrrrrrrrrr}
-  \hline
- & Ref. & VB & CB & TB & VB/TB & VP & VBP & VBP/BP & VP/VB & TI & TI/VB \\
-  \hline
-Ito2001 & \cite{Ito2001} & 1522 &  & 6604 & 0.23 & 2493 & 773 & 0.51 & 1.64 & 4524 & 2.97 \\
-  Cagney2001 & \cite{Cagney2001} &  19 &  &  31 & 0.61 &  40 &  11 & 0.58 & 2.11 &  54 & 2.84 \\
-  Tong2002 & \cite{Tong2002} &  20 &  &  22 & 0.91 &  59 &   5 & 0.25 & 2.95 & 115 & 5.75 \\
-  Hazbun2003 & \cite{Hazbun2003} &  66 &  & 100 & 0.66 & 1940 &  28 & 0.42 & 29.39 & 2524 & 38.24 \\
-  Zhao2005 & \cite{Zhao2005} &   1 &  &   1 & 1.00 &  90 &   0 & 0.00 & 90.00 &  90 & 90.00 \\
-  Uetz2000-1 & \cite{Uetz2000} & 508 &  & 6604 & 0.08 & 630 & 142 & 0.28 & 1.24 & 952 & 1.87 \\
-  Uetz2000-2 & \cite{Uetz2000} & 139 &  & 192 & 0.72 & 400 &  36 & 0.26 & 2.88 & 524 & 3.77 \\
-  Gavin2002 & \cite{Gavin2002} & 455 & 600 & 725 & 0.63 & 1179 & 271 & 0.60 & 2.59 & 3419 & 7.51 \\
-  Ho2002 & \cite{Ho2002} & 493 & 589 & 1739 & 0.28 & 1316 & 231 & 0.47 & 2.67 & 3687 & 7.48 \\
-  Krogan2004 & \cite{Krogan2004} & 153 & 165 & 165 & 0.93 & 483 & 151 & 0.99 & 3.16 & 1132 & 7.40 \\
-  Gavin2006 & \cite{Gavin2006} & 1752 & 1993 & 6466 & 0.27 & 1790 & 991 & 0.57 & 1.02 & 19105 & 10.90 \\
-  Krogan2006 & \cite{Krogan2006} & 2264 & 2357 & 4562 & 0.50 & 5323 & 2226 & 0.98 & 2.35 & 63360 & 27.99 \\
-   \hline
-\end{tabular}
-\caption{Overview of seven Y2H and five AP-MS experiments.
-Abbreviations: VB - the number of viable baits; 
-CB - the number of cloned (hybridized) baits, if available; 
-TB - the total number of baits; 
-VP - the number of viable prey; 
-VBP - the number of proteins observed as both bait and prey;
-TI - the total number of interactions observed.}
-\label{table:perexpt}
-\end{center}
-\end{sidewaystable}
+%\begin{rotate}{90}
+<<edaTable, echo=FALSE, results=tex>>=
 
-\begin{sidewaystable}[p]
-\begin{center}
-
-\begin{tabular}{rrrrrrrr}
-  \hline
-a) & Ito2001 & Cagney2001 & Tong2002 & Hazbun2003 & Zhao2005 & Uetz2000-1 & Uetz2000-2 \\
-  \hline
-Ito2001 &  &   9 &   7 &  24 &   1 & 224 &  47 \\
-  Cagney2001 &  28 &  &   0 &   0 &   0 &   7 &   3 \\
-  Tong2002 &  34 &   0 &  &   0 &   0 &   4 &   7 \\
-  Hazbun2003 & 856 &  14 &  25 &  &   0 &  15 &  12 \\
-  Zhao2005 &  43 &   1 &   2 &  38 &  &   0 &   0 \\
-  Uetz2000-1 & 388 &  14 &  22 & 272 &  15 &  &  36 \\
-  Uetz2000-2 & 200 &   9 &  26 & 204 &  13 & 108 &  \\
-   \hline
-\end{tabular}
-
-\vspace*{4mm}
-
-\begin{tabular}{rrrrrr}
-  \hline
-b) & Gavin2002 & Ho2002 & Krogan2004 & Gavin2006 & Krogan2006 \\
-  \hline
-Gavin2002 &  &  82 &  51 & 442 & 334 \\
-  Ho2002 & 516 &  &  25 & 222 & 286 \\
-  Krogan2004 & 299 & 246 &  & 121 & 151 \\
-  Gavin2006 & 1143 & 717 & 371 &  & 1128 \\
-  Krogan2006 & 1149 & 1277 & 478 & 1732 &  \\
-   \hline
-\end{tabular}
-\caption{\label{table:betweenexpt}%
-Pair-wise comparison of data sets. a) Y2H datasets, b) APMS datasets. 
-Each table shows two distinct statistics: 
-the values above the diagonal give the number of common viable baits 
-between each pair of experiments, 
-the values below the diagonal give the number of common viable prey.}
-\end{center}
-\end{sidewaystable}
+xtable(EDA, display = c("s","d","d", "d","f", "d", "d", "f", "f", "d", "f"), 
+       label = "ta:eda", 
+       caption="A general overview of seven Y2H and five AP-MS experiments:
+                VB - the number of viable baits; CB - the number of 
+                cloned (hybridized) baits 
+                if available; TB - the 
+                total number of baits; VB/TB; 
+                VP - the number of viable prey; VBP - the number of proteins observed
+                as both bait and prey;
+                VBP/VB; VP/VB, TI - the total number of 
+                interactions observed; TI/VB.", 
+       tabular.environment="longtable", floating=FALSE, 
+       size="small")
 
 @ 
+
+<<commProteinsY2H, echo=FALSE, results=hide>>=
+commProtsY2H <- matrix(0, nrow = 7, ncol=7)
+dimnames(commProtsY2H) <- list(dNames[1:7], dNames[1:7])
+for(i in 1:7){
+    for (j in i:7){
+        commProtsY2H[i,j] <- length(intersect(viableBaits[[i]], viableBaits[[j]]))
+
+    }    
+
+    for(k in 1:i){
+        commProtsY2H[i,k] <- length(intersect(viablePrey[[i]], viablePrey[[k]]))
+    }
+}
+diag(commProtsY2H) <- as.numeric(NA)
+
+blah = function(x) paste(
+  "This table shows two distinct statistics on the pair-wise comparison of the", 
+   "data sets. The values above the diagonal give the number of",
+  "common viable baits, the values below the diagonal give the number", 
+  "of common viable prey.")
+@ 
+<<printCommProtsY2H, echo=FALSE, results=tex>>=
+xtable(commProtsY2H, display=c("s", "d", "d", "d", "d", "d", "d", "d"),
+                 label="ta:y2hComp", caption = blah("Y2H"),
+                 tabular.environment="longtable", floating=FALSE, size="small" )
+@ 
+
+<<commProteinsAPMS, echo=FALSE, results=hide>>=
+commProtsAPMS <- matrix(0,5,5)
+viableBaitsA <- viableBaits[8:12]
+viablePreyA <- viablePrey[8:12]
+
+dimnames(commProtsAPMS) <- list(dNames[8:12], dNames[8:12])
+for(i in 1:5){
+    for (j in i:5){
+        commProtsAPMS[i,j] <- length(intersect(viableBaitsA[[i]], viableBaitsA[[j]]))
+
+    }    
+
+    for(k in 1:i){
+        commProtsAPMS[i,k] <- length(intersect(viablePreyA[[i]], viablePreyA[[k]]))
+    }
+}
+diag(commProtsAPMS) <- as.numeric(NA)
+@ 
+
+<<printCommProtsAPMS, echo=FALSE, results=tex>>=
+xtable(commProtsAPMS, display=c("s", "d", "d", "d", "d", "d"),
+                 label="ta:apmsComp", caption = blah("APMS"),
+                  tabular.environment="longtable", floating=FALSE, size="small")
+
+@
+
 
 \bibliographystyle{plain} 
 \bibliography{proteinReview}
