@@ -8,6 +8,17 @@
 
 \documentclass[11pt]{article}    
 
+\usepackage{color}
+\definecolor{WildStrawberry}{rgb}{0.69803922,0.09411765,0.16862745}
+\usepackage[%
+baseurl={http://www.bioconductor.org},%
+pdftitle={Supplementary Material for "Coverage and Error Models of Protein-Protein Interaction Data by Directed Graph Analysis"},%
+pdfauthor={Tony Chiang},%
+pdfsubject={ppiStats},%
+pdfkeywords={Bioconductor},%
+pagebackref,bookmarks,colorlinks,linkcolor=WildStrawberry,citecolor=WildStrawberry,%
+pagecolor=WildStrawberry,raiselinks,plainpages,pdftex]{hyperref}
+
 %----------------------------------------------------------------------
 \usepackage{subfigure}
 \usepackage{graphicx}
@@ -129,39 +140,36 @@ check.names=FALSE,  row.names=dNames)
 \tableofcontents
 
 \begin{abstract}
-% The abstract is typically 150 words, unreferenced. 
-% 1. Why do we care about the problem?
-% 2. What is the problem?
-% 3. How do we solve it?
-% 4. What is the result?
-% 5. What are the implications of the result?
-
-We provide all the necessary materials, methods, and code to generate
-the exploratory data analysis on bait to prey interaction datasets. 
 This compendium serves as a supplementary source of materials for the
-analysis derived in \emph{Coverage and Error Models of Protein-Protein
+analysis presented in \emph{Coverage and Error Models of Protein-Protein
 Interaction Data by Directed Graph Analysis}.
+We provide all necessary materials, methods, and code to reproduce
+the analysis, and present additional results.
 \end{abstract}
 
 \section{Introduction}
-This is a technical report that demonstrates the use of \Rpackage{ppiStats}, 
-\Rpackage{ppiData}, and \Rpackage{yeastExptData} R packages. 
-It accompanies the paper \emph{Coverage and Error Models of Protein-Protein 
-Interaction Data by Directed Graph Analysis} by Chiang et al. This report explains 
-all the steps taken to perform the analysis on the protein interaction data.
-This text has been produced as a reproducible document. It contains 
-the actual computer instructions for the method it describes, and these in 
-turn produce all results, including the figures and tables that are shown 
-here. The computer instructions are given in the language R, thus, in order 
-to reproduce the computations shown here, you will need an installation 
-of R (version 2.4.1 or greater) together with recent versions of the three packages 
-listed above and of some other add-on packages. 
-To reproduce the computations shown here, you do not need to type 
-them or copy-paste them from the PDF file; rather, you can take the file 
-supp.Rnw in the doc directory of the \Rpackage{ppiStats} package, open it in a 
-text editor, run 
-it using the R command Sweave, and modify it to your needs. Alternatively, if
-you would simply like the code without the surrounding text, you can call 
+This technical report accompanies the paper \emph{Coverage and Error
+Models of Protein-Protein Interaction Data by Directed Graph Analysis}
+by Chiang et al.  It explains all the steps taken to perform the
+analysis of protein interaction data described in that paper.  This
+report has been produced as a \emph{reproducible document}: it
+contains all the computer instructions to reproduce the analysis and
+to create the figures, tables and numeric results of the paper.  In
+addition, further analyses are produced that extend and support the
+main results described in the paper.
+
+The production of the reproducible document employs the computational
+system and language R and the add-on packages \Rpackage{ppiStats},
+\Rpackage{ppiData}, and \Rpackage{yeastExpData}.  You will need R
+version 2.4.1 or greater together with recent versions of the three
+packages and some other add-on packages that they depend
+upon and which can be obtain from CRAN or Bioconductor.  To reproduce
+the computations shown here, you do not need to type them or
+copy-paste them from the PDF file; rather, you can take the file
+supp.Rnw in the doc directory of the \Rpackage{ppiStats} package, open
+it in a text editor, run it using the R command Sweave; and if you
+wish, modify the program it to your needs. Alternatively, if you would
+simply like the code without the surrounding text, you can call
 Rtangle on the supp.Rnw file to generate a script file called supp.R.
 
 \section{Obtaining the PPI Data}
@@ -176,7 +184,7 @@ primary sources. Having obtained the bait/prey protein interaction
 data, we created an R data-package \Rpackage{ppiData} where we stored this 
 data. Each dataset is stored in \Rpackage{ppiData} as a directed 
 graph object. As an example, we have selected 4 proteins from the 
-\cite{Krogan2006} dataset and rendered its vertex induced subgraph in
+\cite{Krogan2006} dataset and rendered the vertex induced subgraph in
 Figure~\ref{fig:egKrogan06}.
 
 <<egKrogan06, fig=TRUE, width=3, height=3.5, prefix=FALSE, include=FALSE, echo=FALSE, results=hide>>=
@@ -222,22 +230,22 @@ used throughout this document:
 \begin{itemize}
 
 \item[] \textbf{Bait:} 
-  Any protein sampled for the purposes of ascertaining the 
+  A protein sampled for the purposes of ascertaining the 
   proteins with which it interacts. 
   The set of baits used in an experiment is the bait population. 
 \item[] \textbf{Cloned Bait:} 
-  Any bait that was successfully cloned in a yeast cell with either
+  A bait that was successfully cloned in a yeast cell with either
   a binding domain (Y2H) or a specified tag (AP-MS). 
 \item[] \textbf{Viable Bait:} 
-  Any cloned bait that was observed to detect one or more proteins (prey). 
+  A cloned bait that was observed to detect one or more proteins (prey). 
 \item[] \textbf{Prey:} 
-  Any protein that is tested against the bait proteins. The set of prey used 
+  A protein that is tested against the bait proteins. The set of prey used 
   in an experiment is the prey population. 
 \item[] \textbf{Cloned Prey:} 
   For Y2H, any prey that was successfully cloned
   in a yeast cell with an activation domain. 
 \item[] \textbf{Viable Prey:} 
-  Any prey that was found to interact with a viable bait. 
+  A prey that was found to interact with a viable bait. 
   Sometimes referred to as a \textit{hit}.
 \item[] \textbf{Viable bait-prey:} 
   A protein that is both a viable bait and a 
@@ -245,7 +253,8 @@ used throughout this document:
 \end{itemize}
 
 
-The vector \emph{bpExperimentNames} contains the names to each 
+%% FIXME: please use \Robject, \Rfunction etc. instead of \emph
+The vector \Robject{bpExperimentNames} contains the names to each 
 of the digraph objects. In addition, two list objects (called
 \emph{viableBaits} and \emph{viablePrey}) contain the viable
 baits and viable prey for each experimental dataset respectively.
@@ -264,7 +273,10 @@ get(bpExperimentNames[8])
 In addition to \Rpackage{ppiData}, another R-data package, 
 \Rpackage{yeastExpData}, and the R package \Rpackage{ppiStats}
 were generated. \Rpackage{yeastExpData} contains R objects that
-describe yeast protein abundance, yeast GFP fusion data, and 
+describe yeast protein abundance, 
+% FIXME this is somewhat imprecise. Should say that this R object
+% contains a published dataset on protein abundance, and cite the reference.
+yeast GFP fusion data, and 
 a R dataframe consisting of 33 other yeast protein properties
 obtained from SGD (the dataframe is called \Robject{proteinProperties}). 
 The \Rpackage{ppiStats} package contains all the statistical methods 
@@ -316,6 +328,8 @@ experimental dataset.
 
 In addition to the bar chart, we were able to generate a number of 
 sampling statistics that are otherwise undocumentd on a per experiment
+% FIXME not clear what ``otherwise undocumentd on a per experiment
+% setting'' means, can you precisify (or remove)?
 setting (cf Table~\ref{table:perexpt}), as well as between experiments
 of the same type, i.e. those which used the same system to test
 interactions (cf Table~\ref{table:betweenexpt}). 
@@ -410,6 +424,14 @@ The code written to conduct these hypergeometric tests has been
 supplied with the main article as an additional file. It can 
 also be found in the Script directory of the 
 \Rpackage{ppiStats} package.
+% FIXME: this is confusing - why isn't the code part of this script?
+% and if it is not, please give the exact name and location of the script
+% There is no Script directory in the ppiStats package.
+%
+% I don't like to idea of supplying lots of little scattered files to GB 
+%  - just give them the ppiStats_x.y.z.tar.gz file with everything in it 
+% at the proper place!
+
 
 
 \section{Systematic Bias}
@@ -671,7 +693,7 @@ for(name in ls(bpMat)) {
   f1=myPDF(scpFun(f, "identity"), ch="ident", width=4, height=4)
   f2=myPDF(scpFun(f, "sqrt"), ch="sqrt", width=4, height=4)
   f2e=myEPS(scpFun(f, "sqrt"), ch="sqrt", width=4, height=4)
-  f3=myPDF(hist(f$p, main=name, xlab='p', col="skyblue", breaks=seq(0, 1, by=0.01)), 
+  f3=myPDF(hist(f$p, main=name, xlab='p', col="#e6f598", breaks=seq(0, 1, by=0.01)), 
     ch="hist", width=6, height=2.1)
 
   cat("\\begin{figure}[tp]\\begin{center}\n", file=out)
@@ -1122,11 +1144,11 @@ sh <- lapply(zScore1, shorth)
 @ 
 
 
-<<zScoreHist, fig=TRUE, width=18, height=18, echo=FALSE, results=hide, include=FALSE>>=
+<<zScoreHist, fig=TRUE, width=10, height=14, echo=FALSE, results=hide, include=FALSE>>=
 
 par(mfrow = c(3,4), cex.main = 2, cex.lab=1.5, cex.axis=1.5)
 mapply(function(x,y) {
-  hist(x, main=y, col="blue")},
+  hist(x, main=y, col="#e6f598")},
   zScore1, dNames1)
 @ 
 
@@ -1140,26 +1162,37 @@ few data points which yield little statistical power. Overall,
 Only the \cite{Ito2001, Gavin2006, Krogan2006} plots showed
 approximate unimodal distributions.
 
-<<zScoreDens, fig=TRUE, width=18, height=18, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
-par(mfrow = c(3,1), cex.main = 2, cex.lab=1.5, cex.axis=1.5)
-zScore2 <- zScore1[c(1,10,11)]
-dNames2 <- dNames1[c(1,10,11)]
-m2 <- m[c(1,10,11)]
-dens <- lapply(zScore2, density)
-sh <- lapply(zScore2, shorth)
-mapply(function(x,y,z,w) {plot.density(x, main=paste("Distribution of the z-scores for ", y, sep=""), col="blue");
-                      abline(v=z, col="red");
-                          abline(v=w, col="green")}, dens, dNames2, sh, m2)
-
-
+<<zScoreDens, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
+par(mfrow = c(3,1))
+for(i in c(1, 10, 11)) {
+  z = zScore1[[i]]
+  xlim = c(-1,1)*max(abs(quantile(z, probs=c(0.01, 0.99))))
+  dens = density(z)
+  plot.density(dens, main=paste("z-scores for ", dNames1[i], sep=""), 
+    col="darblue", xlab="z", xlim=xlim, lwd=2)
+  abline(v=c(0, median(z), shorth(z)), 
+         col=c("#808080", brewer.pal(4, "Paired")[c(2,4)]), 
+         lty=c(2,1,1), lwd=2)
+}
 @
 
 \myincfig{fig-zScoreDens}{\textwidth}{Density plots for the three largest
 bait/prey datasets.}
+% FIXME: 
+% 1. please explain what the various lines in this plot mean.
+% 2. do we really need to show median and shorth? What is the point that we
+%    are trying to make? Let's simplify and just present what actually need
+%    to make the argument, not other tangential stuff.
 
 For the three plots that appear to have unimodal distributions, we plotted 
-their densities (Figure~\ref{fig-zScoreDens}). With more data points, we can 
+their densities (Figure~\ref{fig-zScoreDens}). 
+% FIXME: the plot for Ito does not look unimodal! Please, we should not talk
+%  about submitting this paper this week and still have such howlers in there.
+
+With more data points, we can 
 better investigate these densities for possible biological associations. 
+% FIXME: what does that mean
+
 
 \newpage
 %--------------------------------------------------
