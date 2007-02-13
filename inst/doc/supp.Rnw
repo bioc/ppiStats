@@ -1167,12 +1167,15 @@ par(mfrow = c(3,1))
 for(i in c(1, 10, 11)) {
   z = zScore1[[i]]
   xlim = c(-1,1)*max(abs(quantile(z, probs=c(0.01, 0.99))))
-  dens = density(z)
+  dens = density(z, adjust=2)
   plot.density(dens, main=paste("z-scores for ", dNames1[i], sep=""), 
     col="darkblue", xlab="z", xlim=xlim, lwd=2)
-  abline(v=c(0, median(z), shorth(z)), 
-         col=c("#808080", brewer.pal(4, "Paired")[c(2,4)]), 
+  abline(v=c(0, dens$x[which.max(dens$y)]),
+         col=c("#808080", brewer.pal(4, "Paired")[2]), 
          lty=c(2,1,1), lwd=2)
+  #abline(v=c(0, median(z), shorth(z)), 
+  #       col=c("#808080", brewer.pal(4, "Paired")[c(2,4)]), 
+  #       lty=c(2,1,1), lwd=2)
 }
 @
 
