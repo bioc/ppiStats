@@ -10,15 +10,15 @@
 
 \usepackage{color}
 \definecolor{WildStrawberry}{rgb}{0.69803922,0.09411765,0.16862745}
-\usepackage[%
-baseurl={http://www.bioconductor.org},%
-pdftitle={Supplementary Material for "Coverage and Error Models of 
-  Protein-Protein Interaction Data by Directed Graph Analysis"},%
-pdfauthor={Tony Chiang},%
-pdfsubject={ppiStats},%
-pdfkeywords={Bioconductor},%
-pagebackref,bookmarks,colorlinks,linkcolor=WildStrawberry,citecolor=WildStrawberry,%
-pagecolor=WildStrawberry,raiselinks,plainpages,pdftex]{hyperref}
+%\usepackage[%
+%baseurl={http://www.bioconductor.org},%
+%pdftitle={Supplementary Material for "Coverage and Error Models of 
+%  Protein-Protein Interaction Data by Directed Graph Analysis"},%
+%pdfauthor={Tony Chiang},%
+%pdfsubject={ppiStats},%
+%pdfkeywords={Bioconductor},%
+%spagebackref,bookmarks,colorlinks,linkcolor=WildStrawberry,citecolor=WildStrawberry,%
+%pagecolor=WildStrawberry,raiselinks,plainpages,pdftex]{hyperref}
 
 %----------------------------------------------------------------------
 \usepackage{subfigure}
@@ -537,18 +537,22 @@ the package \Rpackage{ppiStats}.
 
 
 makeBPMat <- function(){
+  test <- mapply(intersect, viableBaits, viablePrey)
   bpMat = new.env(parent=globalenv(), hash=FALSE)
   for(g in bpExperimentNames) {
     m = as(get(g), "matrix")
     ## delete self-edges
-    diag(m) = 0  
+    diag(m) = 0
+    
 
     stopifnot(identical(rownames(m), colnames(m)))
     vbp = rownames(m)[ (rowSums(m)>0) & (colSums(m)>0) ]
-
+    
+    
     m = m[vbp, vbp]
 
     if(nrow(m)>1) {
+      stopifnot(identical(test[[g]],vbp))
       assign(g, m, envir=bpMat)
     } else {
       cat(sprintf("Omitting %s, there is nothing much to do.\n", g))
@@ -1363,6 +1367,9 @@ degs = sapply(degs, "(")
 rownames(degs) = c("ntot", "nrec", "nunr")
 degs
 
+degs1 = eapply(bpRed, getNrecNunr)
+  degs1 <- sapply(degs1, "(")
+  rownames(degs1) = c("ntot", "nrec", "nunr")
 @ 
 
 We now take the experimental datasets obtained from
@@ -1381,14 +1388,28 @@ for (i in 1:ncol(degs)) {
 }
 @
 
+<<pfppfnFiltSep, echo=FALSE, fig=TRUE, eps=FALSE,include=FALSE,width=8.5,height=12, results=hide>>=
+par(mfrow=c(4,3))
+for (i in 1:ncol(degs1)) {
+  n1 = seq(1, round(3*(sum(degs1[c("nrec", "nunr"), i]))))
+  r = estErrProbMethodOfMoments(n1, nrec=degs1["nrec", i], 
+     nunr=degs1["nunr", i], ntot=degs1["ntot", i])
+  plotpfppfn(r, main = colnames(degs1)[i])
+}
+@
+
 We plot each dataset individually to ascertain the 
 range for $\pfp$ and for $\pfn$. The result of this is plotted in 
-Figure~\ref{fig-pfppfnUnfiltSep}. 
+Figure~\ref{fig-pfppfnUnfiltSep} for the unfiltered data
+and in Figure~\ref{fig-pfppfnFiltSep} for the filtered data. 
 
 \newpage
 
 \myincfig{fig-pfppfnUnfiltSep}{\textwidth}{The solution manifolds
   (one plot per dataset, unfiltered data).}
+
+\newpage\myincfig{fig-pfppfnFiltSep}{\textwidth}{The solution manifolds
+  (one plot per dataset, filtered data)}
 
 
 <<pfppfnAll2gether, echo=FALSE, fig=TRUE, eps=FALSE,include=FALSE,width=10,height=15, results=hide>>=
@@ -1429,12 +1450,8 @@ Figure~\ref{fig-pfppfnUnfiltSep}.
     
   }
   
-  degs1 = eapply(bpRed, getNrecNunr)
-  degs1 <- sapply(degs1, "(")
-  rownames(degs1) = c("ntot", "nrec", "nunr")
-  
-  for(what in names(expts)) {
-    plot(c(0, xmax[what]), c(0,1), type="n", xlab=expression(p[FP]), 
+for(what in names(expts)) {
+  plot(c(0, xmax[what]), c(0,1), type="n", xlab=expression(p[FP]), 
          ylab=expression(p[FN]), 
          main=paste(what, "- Filtered Data", sep=" "), 
          sub=paste("(",letters[counter],")", sep=""), 
@@ -1603,7 +1620,7 @@ xtable(EDA, display = c("s","d","d", "d","f", "d", "d", "f", "f", "d", "f"),
                 as both bait and prey;
                 VBP/VB; VP/VB, TI - the total number of 
                 interactions observed; TI/VB.", 
-       tabular.environment="longtable", floating=FALSE, 
+       tabular.environment="sidewaystable", floating=FALSE, 
        size="small")
 
 @ 
@@ -1660,6 +1677,81 @@ xtable(commProtsAPMS, display=c("s", "d", "d", "d", "d", "d"),
                   tabular.environment="longtable", floating=FALSE, size="small")
 
 @
+
+
+<<pfpStats, echo=FALSE, results=hide>>=
+
+if("Zhao2005BPGraph" %in% names(vbp)){
+  ind <- which(names(vbp) == "Zhao2005BPGraph")
+  vbp <- vbp[-ind]}
+
+stats <- matrix(0,11,9)
+
+stats[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow) 
+stats[,2] <- choose(stats[,1], 2)
+stats[,3] <-  c(.0008, .04, .07, .015, .003, .015, .004, .005, 
+                .012, .0015, .0015)
+stats[,4] <- round(stats[,2]*stats[,3]*(1-stats[,3]))
+stats[,5] <- round(stats[,2]*stats[,3]^2, digits=2)
+stats[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
+stats[,7] <- round(stats[,4]/stats[,6], digits=2)
+stats[,8] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x*t(x))/2})
+stats[,9] <- round(stats[,5]/stats[,8], digits=2)
+
+rownames(stats) <- dNames1
+colnames(stats) <- letters[1:9]
+
+cap <- "A statistical analysis on the expected number of positiv errors on the filtered data. 
+        Column a: number of proteins retained after the filtering the data;
+        Column b: the approximate number of protein pairs which do not interact;
+        Column c: \pfp given that \pfn is zero;
+        Column d: the expected number of unreciprocated false positive observations;
+        Column e: the expected number of reciprocated false positive observations;
+        Column f: the actual number of observed unreciprocated interactions;
+        Column g: the false discovery rate for unreciprocated observations;
+        Column h: the actual number of observed recriprocated interactions;
+        Column i: the false discovery rate of observed reciprocated interactions."
+
+stats
+@ 
+
+<<pfnStats, echo=FALSE, results=hide>>=
+stats2 <- matrix(0, 11, 9)
+stats2[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow)
+stats2[,2] <- c(1200, 8, 2, 20, 78, 34, 584, 649, 223, 2429, 11744)
+stats2[,3] <- c(.78, 0.4, 0.3, .55, .62, .56, .41, .62, .38, .41, .8)
+stats2[,4] <- round(stats2[,2]*stats2[,3]*(1-stats2[,3]))
+stats2[,5] <- round(stats2[,2]*stats2[,3]^2)
+stats2[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
+stats2[,7] <- round(stats2[,4]/stats2[,6], digit=2)
+stats2[,8] <- sapply(as.list(bpRed)[names(vbp)], 
+                                      function(x) {sum(!(x*t(x)))/2})
+stats2[,9] <- round(stats2[,5]/stats2[,8], digit=2)
+rownames(stats2) <- dNames1
+colnames(stats2) <- letters[1:9]
+stats2
+cap2 <- "A statistical analysis on the expected number of negative errors on the filtered data. 
+        Column a: estimated number of interactions given \pfp is zero;
+        Column b: \pfn given that \pfp is zero;
+        Column c: the expected number of unreciprocated false negative observations;
+        Column d: the false discovery rate for unreciprocated observations;
+        Column e: the expected number of reciprocated false negative observations;
+        
+        Column f: the false discovery rate of observed reciprocated non-adjacent protein pairs."
+@ 
+
+<<pfpTab, echo=FALSE, results=tex>>=
+xtable(stats, display=c("s","d","d","f","d","d","d","f","d", "f"), label="ta:pfp", 
+       tabular.environment="longtable", floating=FALSE, size="small",
+       caption=cap)
+
+@ 
+
+<<pfnTab, echo=FALSE, results=tex>>=
+xtable(stats2, display=c("s","d","d","f","d","d","d","f","d", "f"), label="ta:pfn", 
+       tabular.environment="longtable", floating=FALSE, size="small", caption=cap2)
+
+@ 
 
 
 \bibliographystyle{plain} 
