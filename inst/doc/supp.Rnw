@@ -823,7 +823,7 @@ logisticTests <-
         as.numeric(switch(which.test,
                           large.indegree = ginfo$in.large.pval, 
                           small.indegree = ginfo$out.large.pval) < pval.cutoff)
-    glm(formula, ginfo, family = family, ...)  
+    glm(formula, ginfo, family = family, control = glm.control(maxit = 100) ,...)  
 }
 
 
@@ -1700,18 +1700,6 @@ stats[,9] <- round(stats[,5]/stats[,8], digits=2)
 
 rownames(stats) <- dNames1
 colnames(stats) <- letters[1:9]
-
-cap <- "A statistical analysis on the expected number of positiv errors on the filtered data. 
-        Column a: number of proteins retained after the filtering the data;
-        Column b: the approximate number of protein pairs which do not interact;
-        Column c: \pfp given that \pfn is zero;
-        Column d: the expected number of unreciprocated false positive observations;
-        Column e: the expected number of reciprocated false positive observations;
-        Column f: the actual number of observed unreciprocated interactions;
-        Column g: the false discovery rate for unreciprocated observations;
-        Column h: the actual number of observed recriprocated interactions;
-        Column i: the false discovery rate of observed reciprocated interactions."
-
 stats
 @ 
 
@@ -1730,28 +1718,63 @@ stats2[,9] <- round(stats2[,5]/stats2[,8], digit=2)
 rownames(stats2) <- dNames1
 colnames(stats2) <- letters[1:9]
 stats2
-cap2 <- "A statistical analysis on the expected number of negative errors on the filtered data. 
-        Column a: estimated number of interactions given \pfp is zero;
-        Column b: \pfn given that \pfp is zero;
-        Column c: the expected number of unreciprocated false negative observations;
-        Column d: the false discovery rate for unreciprocated observations;
-        Column e: the expected number of reciprocated false negative observations;
-        
-        Column f: the false discovery rate of observed reciprocated non-adjacent protein pairs."
 @ 
 
 <<pfpTab, echo=FALSE, results=tex>>=
 xtable(stats, display=c("s","d","d","f","d","d","d","f","d", "f"), label="ta:pfp", 
-       tabular.environment="longtable", floating=FALSE, size="small",
-       caption=cap)
+       tabular.environment="longtable", floating=FALSE, size="small")
 
 @ 
 
 <<pfnTab, echo=FALSE, results=tex>>=
 xtable(stats2, display=c("s","d","d","f","d","d","d","f","d", "f"), label="ta:pfn", 
-       tabular.environment="longtable", floating=FALSE, size="small", caption=cap2)
+       tabular.environment="longtable", floating=FALSE, size="small")
 
 @ 
+
+<<cor, results=hide, echo=FALSE>>=
+data(gfp)
+data(fcabundance)
+
+pN1 <- intersect(rownames(proteinProperties), rownames(gfp))
+c1 <- cor(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
+    use="pairwise.complete.obs")
+c1S <- cor(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
+    use="pairwise.complete.obs", method="spearman")
+
+pN2 <- intersect(rownames(proteinProperties), rownames(fcabundance))
+c2 <- cor(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
+    use="pairwise.complete.obs")
+c2S <- cor(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
+    use="pairwise.complete.obs", method="spearman")
+
+c3 <- cor(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
+    use="pairwise.complete.obs")
+
+c3S <- cor(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
+    use="pairwise.complete.obs", method="spearman")
+@ 
+
+<<plotCor, echo=False, results=hide, fig=TRUE, include=FALSE, width=10, height=15>>=
+par(mfrow=c(3,1), lwd=2)
+plot(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
+     xlab="CAI value", ylab="Log Protein Abundance", 
+     main=paste("Spearman Correlation Coefficient = ", round(c1S,digit=2), sep=""))
+abline(coef(0,c1S), col="white")
+plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
+     xlab = "CAI value", ylab="Log Protein Abundance in YEPD", 
+     main=paste("Spearman Correlation Coefficient = ", round(c2S,digit=2), sep=""))
+abline(coef(0,c2S), col="white")
+plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
+     xlab="CAI value", ylab="Log Protein Abundance in SD", 
+     main=paste("Spearman Correlation Coefficient = ", round(c3S,digit=2), sep=""))
+abline(coef(0,c3S), col="white")
+@
+
+\newpage
+\myincfig{fig-plotCor}{\textwidth}{The three plots are used to 
+show the Spearman Correlation Coefficient between CAI and 
+various protein abundance data.}
 
 
 \bibliographystyle{plain} 
