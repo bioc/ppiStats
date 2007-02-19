@@ -734,6 +734,7 @@ data(fcabundance)
 
 <<init,results=hide,echo=FALSE,cache=TRUE>>=
 
+
 ## The ultimate goal here is to do enough to see if unrecipInDegree is
 ## significantly larger (smaller) than unrecipOutDegree for each
 ## protein, and see if that dependence is related to abundance.  As the
@@ -912,6 +913,7 @@ do.call(rbind,
 ##
 @ 
 
+
 In addition to the Logistic Regressions, we plotted the adjacency matrix 
 diagram of the bait/prey interactions in two different ways: 1. the rows 
 and columns randomly ordered and 2. the rows and columns ordered by ascending 
@@ -987,6 +989,78 @@ plot(mat.CAI, split = c(2, 1, 2, 1), more = FALSE)
            }
        }
      \end{figure}
+
+There has been a number of research articles that point to the relationship
+between CAI and protein abundance. To verify this fact, we computed both the
+Pearson and Spearman correlation coefficients between CAI and three sets
+of abundance data: 1. a general measure of abundance in the yeast cell, 2.
+the mean measure of abundance of a yeast cell in YEPD medium, and 3. the 
+mean measure of abundance of a yeast cell in a SD medium (Table~\ref{ta:cor}). The Spearman 
+correlation seems to be the more accurate measure, not simply because 
+it is larger, but because the relationship between CAI and abundance is not
+linear \cite{Sharp1987}. 
+
+<<cor, results=hide, echo=FALSE>>=
+data(gfp)
+data(fcabundance)
+
+pN1 <- intersect(rownames(proteinProperties), rownames(gfp))
+c1 <- cor(proteinProperties[pN1,"cai"], (gfp[pN1, "abundance"]),
+    use="pairwise.complete.obs")
+c1S <- cor(proteinProperties[pN1,"cai"], (gfp[pN1, "abundance"]),
+    use="pairwise.complete.obs", method="spearman")
+
+pN2 <- intersect(rownames(proteinProperties), rownames(fcabundance))
+c2 <- cor(proteinProperties[pN2,"cai"], (fcabundance[pN2, "YEPD.mean"]),
+    use="pairwise.complete.obs")
+c2S <- cor(proteinProperties[pN2,"cai"], (fcabundance[pN2, "YEPD.mean"]),
+    use="pairwise.complete.obs", method="spearman")
+
+c3 <- cor(proteinProperties[pN2,"cai"], (fcabundance[pN2, "SD.mean"]),
+    use="pairwise.complete.obs")
+
+c3S <- cor(proteinProperties[pN2,"cai"], (fcabundance[pN2, "SD.mean"]),
+    use="pairwise.complete.obs", method="spearman")
+
+cm <- matrix(0, 2,3)
+cm[1,] <- round(c(c1,c2,c3), digit=2)
+cm[2,] <- round(c(c1S,c2S,c3S), digit=2)
+
+rownames(cm) <- c("Pearson", "Spearman")
+colnames(cm) <- c("General Abundance","YEPD","SD")
+@ 
+
+<<corTab, results=tex, echo=FALSE>>=
+xtable(cm, display=c("s","fg","fg","fg"), label="ta:cor", 
+       tabular.environment="longtable", floating=FALSE, size="small")
+@ 
+
+We plotted the values of each protein's CAI value against $(\log)$ the three sets of
+measured abundance data to visulize this association (Figure~\ref{fig-plotCor}). 
+The most interesting 
+fact is that the measured abundance has the highest correlation with CAI. This 
+seems to suggest that the reference set of genes used to compute all CAI
+might be highly expressed under SD medium.
+
+<<plotCor, echo=False, results=hide, fig=TRUE, include=FALSE, width=10, height=15>>=
+par(mfrow=c(3,1), lwd=2)
+plot(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
+     xlab="CAI value", ylab="Log Protein Abundance", 
+     main=paste("Spearman Correlation Coefficient = ", round(c1S,digit=2), sep=""))
+abline(coef(0,c1S), col="white")
+plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
+     xlab = "CAI value", ylab="Log Protein Abundance in YEPD", 
+     main=paste("Spearman Correlation Coefficient = ", round(c2S,digit=2), sep=""))
+abline(coef(0,c2S), col="white")
+plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
+     xlab="CAI value", ylab="Log Protein Abundance in SD", 
+     main=paste("Spearman Correlation Coefficient = ", round(c3S,digit=2), sep=""))
+abline(coef(0,c3S), col="white")
+@
+
+\myincfig{fig-plotCor}{\textwidth}{Plots of CAI against $\log$ of the three measured 
+abundance datasets.}
+
 
 \subsection{Fisher's Exact Test Across Experiment}
 
@@ -1177,7 +1251,8 @@ their densities (Figure~\ref{fig-zScoreDens}).
 
 \newpage
 %--------------------------------------------------
-\section{Estimation of $\pfp$ and $\pfn$ by the method of moments}
+\section{Stochastic Error Analysis: 
+  Estimation of $\pfp$ and $\pfn$ by the method of moments}
 %--------------------------------------------------
 \subsection{Derivation}  
 %--------------------------------------------------
@@ -1227,9 +1302,9 @@ We can plug this expression for $\pfn$ into Equation~\eqref{x2} and obtain
 \underbrace{\left(\Delta-2n\right)}_{=:b} \pfp + 
 \underbrace{n+\frac{\Delta^2}{4n^c}-\frac{n}{n^c}x_2}_{=:c} = 0.
 \end{equation}
-The equation $aw^2 + bw +c=0$ is solved by
+The equation $a(\pfp)^2 + b(\pfp) + c = 0$ is solved by
 \begin{equation}
-w_{1,2}=\frac{-b\pm\sqrt{b^2-4ac}}{2a}.\label{p}
+(\pfp)_{1,2}=\frac{-b\pm\sqrt{b^2-4ac}}{2a}.\label{p}
 \end{equation}
 Hence, the problem is solved: for data $N$, $x_1$, $x_2$
 (from these, $x_3$ is implied) and for all possible (unknown) 
@@ -1493,6 +1568,90 @@ The result of this is plotted in Figure~\ref{fig-pfppfnAll2gether}.
   \cite{Gavin2006, Krogan2006} implying that systematic errors may 
   potentially have large effects on $\pfp$.}
 
+\section{Stochastic Error Analysis: Estimation of Unreciprocated
+  and Reciprocated FP/FN Errors within the Measured Data}
+
+<<pfpStats, echo=FALSE, results=hide>>=
+if("Zhao2005BPGraph" %in% names(vbp)){
+  ind <- which(names(vbp) == "Zhao2005BPGraph")
+  vbp <- vbp[-ind]}
+stats <- matrix(0,11,7)
+stats[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow) 
+stats[,2] <- choose(stats[,1], 2)
+stats[,3] <-  c(.0008, .04, .07, .015, .003, .015, .004, .005, 
+                .012, .0015, .0015)
+stats[,4] <- round(stats[,2]*stats[,3]*(1-stats[,3]))
+stats[,5] <- round(stats[,2]*stats[,3]^2, digits=2)
+stats[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
+stats[,7] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x*t(x))/2})
+rownames(stats) <- dNames1
+colnames(stats) <- c("N","m","pfp","E[Z]","E[Z2]","z","z2")
+stats
+@ 
+
+<<pfnStats, echo=FALSE, results=hide>>=
+stats2 <- matrix(0, 11, 7)
+stats2[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow)
+stats2[,2] <- c(1200, 8, 2, 20, 78, 34, 584, 649, 223, 2429, 11744)
+stats2[,3] <- c(.78, 0.4, 0.3, .55, .62, .56, .41, .62, .38, .41, .8)
+stats2[,4] <- round(stats2[,2]*stats2[,3]*(1-stats2[,3]))
+stats2[,5] <- round(stats2[,2]*stats2[,3]^2)
+stats2[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
+stats2[,7] <- sapply(as.list(bpRed)[names(vbp)], 
+                                      function(x) {sum(!(x*t(x)))/2})
+rownames(stats2) <- dNames1
+colnames(stats2) <- c("N","n","pfn","E[W]","E[W2]","w","w2")
+stats2
+@ 
+
+Using the Multinomial error model, we can estimate the expected number 
+unreciprocated and reciprocated number of false positive as well as false negative
+interactions. For these estimates, we use only the filtered set of data
+on the protein interactions, and let $N$ be the number of proteins in the filtered
+set. We begin by estimating the FP errors. To calculate the expected number
+of FP observations, we need estimates for $\pfp$ as well as $m$ (since FP is
+a property on $I^c$). To obtain these estimates, we assume that $\pfn=0$ so that
+all errors will be strictly FP. This makes the estimate for $\pfp$ maximal, and
+the number of expected FP observations that we calculate will all be for the worst
+case scenairo. Using the Multinomial error model, we generate $\pfp$'s for all
+the datasets. We can also generate the value for $m$ by assuming that $\pfn=0$,
+but for the sake of convenience, we will approximate $m$ by $N \choose 2$. 
+Unreciprocated FP errors can be estimated by $\pfp(1-\pfp)m$; reciprocated,
+by $\pfp^2m$. Lastly we provide the number of observed unreciprcated and
+reciprocated interactions to serve as a reference. These estimates can be found
+in Table~\ref{ta:pfp}
+
+<<pfpTab, echo=FALSE, results=tex>>=
+xtable(stats, display=c("s","d","d","fg","d","fg","d","d"), label="ta:pfp", 
+       tabular.environment="longtable", floating=FALSE, size="small",
+       caption = "Estimates of FP unreciprocated and reciprocated errors
+       via the Multinomial error Model. Z is the random variable 
+       associated with unreciprocated FP errors; Z2 corresponds with 
+       reciprocated FP errors. z and z2 denote the observed number of
+       unreciprocated and reciprocated interactions found in the data.")
+@ 
+
+Similarly, we also use the Multinomial error model to estimate the expected
+number of unreciprocated and reciprocated false negative observations. We 
+estimate $\pfn$ and $n$ by assuming that $\pfp=0$, and so, again we presume 
+that all errors are strictly FN. This makes $\pfn$ maximal, and this also 
+makes these estimates for FN errors in the worst case scenario. Similar to the
+FP estimates, unreciprocated FN errors is estimated by $\pfn(1-\pfn)n$; 
+reciprocated by $\pfn^2n$. We also provide the number of observed unreciprcated 
+and reciprocated non-interacting protein pairs found within the datasets. 
+These estimates can be found in Table~\ref{ta:pfn}
+
+<<pfnTab, echo=FALSE, results=tex>>=
+xtable(stats2, display=c("s","d","d","f","d","d","d","d"), label="ta:pfn", 
+       tabular.environment="longtable", floating=FALSE, size="small", 
+       caption = "Estimates of FN unreciprocated and reciprocated errors
+       via the Multinomial error Model. W is the random variable 
+       associated with unreciprocated FP errors; W2 corresponds with 
+       reciprocated FP errors. w and w2 denote the observed number of
+       unreciprocated and reciprocated interactions found in the data.")
+@ 
+
+
 \section{Cross Data Integration and Analysis}
 We have shown that protein interaction analysis can be measured
 by three quality metrics: 1. sampling, 2. proteins that might
@@ -1677,105 +1836,6 @@ xtable(commProtsAPMS, display=c("s", "d", "d", "d", "d", "d"),
                   tabular.environment="longtable", floating=FALSE, size="small")
 
 @
-
-
-<<pfpStats, echo=FALSE, results=hide>>=
-
-if("Zhao2005BPGraph" %in% names(vbp)){
-  ind <- which(names(vbp) == "Zhao2005BPGraph")
-  vbp <- vbp[-ind]}
-
-stats <- matrix(0,11,9)
-
-stats[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow) 
-stats[,2] <- choose(stats[,1], 2)
-stats[,3] <-  c(.0008, .04, .07, .015, .003, .015, .004, .005, 
-                .012, .0015, .0015)
-stats[,4] <- round(stats[,2]*stats[,3]*(1-stats[,3]))
-stats[,5] <- round(stats[,2]*stats[,3]^2, digits=2)
-stats[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
-stats[,7] <- round(stats[,4]/stats[,6], digits=2)
-stats[,8] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x*t(x))/2})
-stats[,9] <- round(stats[,5]/stats[,8], digits=2)
-
-rownames(stats) <- dNames1
-colnames(stats) <- letters[1:9]
-stats
-@ 
-
-<<pfnStats, echo=FALSE, results=hide>>=
-stats2 <- matrix(0, 11, 9)
-stats2[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow)
-stats2[,2] <- c(1200, 8, 2, 20, 78, 34, 584, 649, 223, 2429, 11744)
-stats2[,3] <- c(.78, 0.4, 0.3, .55, .62, .56, .41, .62, .38, .41, .8)
-stats2[,4] <- round(stats2[,2]*stats2[,3]*(1-stats2[,3]))
-stats2[,5] <- round(stats2[,2]*stats2[,3]^2)
-stats2[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
-stats2[,7] <- round(stats2[,4]/stats2[,6], digit=2)
-stats2[,8] <- sapply(as.list(bpRed)[names(vbp)], 
-                                      function(x) {sum(!(x*t(x)))/2})
-stats2[,9] <- round(stats2[,5]/stats2[,8], digit=2)
-rownames(stats2) <- dNames1
-colnames(stats2) <- letters[1:9]
-stats2
-@ 
-
-<<pfpTab, echo=FALSE, results=tex>>=
-xtable(stats, display=c("s","d","d","f","d","d","d","f","d", "f"), label="ta:pfp", 
-       tabular.environment="longtable", floating=FALSE, size="small")
-
-@ 
-
-<<pfnTab, echo=FALSE, results=tex>>=
-xtable(stats2, display=c("s","d","d","f","d","d","d","f","d", "f"), label="ta:pfn", 
-       tabular.environment="longtable", floating=FALSE, size="small")
-
-@ 
-
-<<cor, results=hide, echo=FALSE>>=
-data(gfp)
-data(fcabundance)
-
-pN1 <- intersect(rownames(proteinProperties), rownames(gfp))
-c1 <- cor(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
-    use="pairwise.complete.obs")
-c1S <- cor(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
-    use="pairwise.complete.obs", method="spearman")
-
-pN2 <- intersect(rownames(proteinProperties), rownames(fcabundance))
-c2 <- cor(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
-    use="pairwise.complete.obs")
-c2S <- cor(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
-    use="pairwise.complete.obs", method="spearman")
-
-c3 <- cor(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
-    use="pairwise.complete.obs")
-
-c3S <- cor(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
-    use="pairwise.complete.obs", method="spearman")
-@ 
-
-<<plotCor, echo=False, results=hide, fig=TRUE, include=FALSE, width=10, height=15>>=
-par(mfrow=c(3,1), lwd=2)
-plot(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
-     xlab="CAI value", ylab="Log Protein Abundance", 
-     main=paste("Spearman Correlation Coefficient = ", round(c1S,digit=2), sep=""))
-abline(coef(0,c1S), col="white")
-plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
-     xlab = "CAI value", ylab="Log Protein Abundance in YEPD", 
-     main=paste("Spearman Correlation Coefficient = ", round(c2S,digit=2), sep=""))
-abline(coef(0,c2S), col="white")
-plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
-     xlab="CAI value", ylab="Log Protein Abundance in SD", 
-     main=paste("Spearman Correlation Coefficient = ", round(c3S,digit=2), sep=""))
-abline(coef(0,c3S), col="white")
-@
-
-\newpage
-\myincfig{fig-plotCor}{\textwidth}{The three plots are used to 
-show the Spearman Correlation Coefficient between CAI and 
-various protein abundance data.}
-
 
 \bibliographystyle{plain} 
 \bibliography{proteinReview}
