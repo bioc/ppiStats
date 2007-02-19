@@ -421,8 +421,12 @@ to manipulate these parameters within the R scripts.
 
 The code written to conduct these hypergeometric tests has been 
 supplied with the main article as an additional file. It can 
-also be found in the Script directory of the 
-\Rpackage{ppiStats} package.
+also be found in the Scripts directory of the 
+\Rpackage{ppiStats} package. The file \Robject{hgGO.R} is a 
+script file which computes the conditional hypergeometric 
+testing on the GO directed acyclic graphs (DAG). The file
+\Robject{hgPfam.R} computes the hypergeometric testing on 
+Pfam domains. 
 
 \section{Systematic Bias}
 %--------------------------------------------------
@@ -995,10 +999,10 @@ between CAI and protein abundance. To verify this fact, we computed both the
 Pearson and Spearman correlation coefficients between CAI and three sets
 of abundance data: 1. a general measure of abundance in the yeast cell, 2.
 the mean measure of abundance of a yeast cell in YEPD medium, and 3. the 
-mean measure of abundance of a yeast cell in a SD medium (Table~\ref{ta:cor}). The Spearman 
-correlation seems to be the more accurate measure, not simply because 
-it is larger, but because the relationship between CAI and abundance is not
-linear \cite{Sharp1987}. 
+mean measure of abundance of a yeast cell in a SD medium (Table~\ref{ta:cor}). 
+The Spearman correlation seems to be the more accurate measure, not simply
+ because it is larger, but because the relationship between CAI and 
+abundance is not linear \cite{Sharp1987}. 
 
 <<cor, results=hide, echo=FALSE>>=
 data(gfp)
@@ -1032,18 +1036,24 @@ colnames(cm) <- c("General Abundance","YEPD","SD")
 
 <<corTab, results=tex, echo=FALSE>>=
 xtable(cm, display=c("s","fg","fg","fg"), label="ta:cor", 
-       tabular.environment="longtable", floating=FALSE, size="small")
+       tabular.environment="longtable", floating=FALSE, size="small",
+       caption = "This table gives both the Pearson and Spearman
+       correlation between CAI against three distinct protein
+       abundance datasets: 1. General Abundance, 2. Abundance in 
+       the YEPD medium, 3. Abundance in the SD medium. An interesting 
+       observation is that the highest correlation found is between CAI 
+       and protein abundance in the SD medium.")
 @ 
 
-We plotted the values of each protein's CAI value against $(\log)$ the three sets of
-measured abundance data to visulize this association (Figure~\ref{fig-plotCor}). 
-The most interesting 
-fact is that the measured abundance has the highest correlation with CAI. This 
-seems to suggest that the reference set of genes used to compute all CAI
-might be highly expressed under SD medium.
+We plotted the values of each protein's CAI value against $(\log)$ the three 
+sets of measured abundance data to visulize this association 
+(Figure~\ref{fig-plotCor}). The most interesting fact is that the measured 
+abundance has the highest correlation with CAI. This seems to suggest that 
+the reference set of genes used to compute all CAI might be highly expressed 
+under SD medium.
 
 <<plotCor, echo=False, results=hide, fig=TRUE, include=FALSE, width=10, height=15>>=
-par(mfrow=c(3,1), lwd=2)
+par(mfrow=c(3,1), lwd=2, cex.lab=2, cex.axis=1.5)
 plot(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
      xlab="CAI value", ylab="Log Protein Abundance", 
      main=paste("Spearman Correlation Coefficient = ", round(c1S,digit=2), sep=""))
@@ -1059,7 +1069,7 @@ abline(coef(0,c3S), col="white")
 @
 
 \myincfig{fig-plotCor}{\textwidth}{Plots of CAI against $\log$ of the three measured 
-abundance datasets.}
+abundance datasets.} 
 
 
 \subsection{Fisher's Exact Test Across Experiment}
@@ -1483,7 +1493,9 @@ and in Figure~\ref{fig-pfppfnFiltSep} for the filtered data.
 \myincfig{fig-pfppfnUnfiltSep}{\textwidth}{The solution manifolds
   (one plot per dataset, unfiltered data).}
 
-\newpage\myincfig{fig-pfppfnFiltSep}{\textwidth}{The solution manifolds
+\newpage
+
+\myincfig{fig-pfppfnFiltSep}{\textwidth}{The solution manifolds
   (one plot per dataset, filtered data)}
 
 
