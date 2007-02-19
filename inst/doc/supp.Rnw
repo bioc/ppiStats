@@ -556,7 +556,6 @@ makeBPMat <- function(){
     m = m[vbp, vbp]
 
     if(nrow(m)>1) {
-      stopifnot(identical(test[[g]],vbp))
       assign(g, m, envir=bpMat)
     } else {
       cat(sprintf("Omitting %s, there is nothing much to do.\n", g))
