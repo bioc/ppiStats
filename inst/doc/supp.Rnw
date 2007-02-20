@@ -947,7 +947,7 @@ mat.random <-
           aspect = "iso",
           xlab = "Prey",
           ylab = "Bait",
-          main = "Random Order", 
+          main = "a. Random Order", 
           colorkey = FALSE, sub = "")
           
 mat.CAI <- 
@@ -956,7 +956,7 @@ mat.CAI <-
           aspect = "iso",
           xlab = "Prey",
           ylab = "Bait",
-          main = "Ordered By Ascending CAI", 
+          main = "b. Ordered By Ascending CAI", 
           colorkey = FALSE, sub="")
 
 
@@ -1516,8 +1516,8 @@ and in Figure~\ref{fig-pfppfnFiltSep} for the filtered data.
   for(what in names(expts)) {
     plot(c(0, xmax[what]), c(0,1), type="n", xlab=expression(p[FP]), 
          ylab=expression(p[FN]), 
-         main=paste(what, "- Unfiltered Data", sep=" "), 
-         sub=paste("(",letters[counter],")",sep=""),
+         main=paste(letters[counter],". ", what, " - Unfiltered Data", 
+           sep=""), 
          xlim=c(0,xmax[what]))
 
     newName <- sub("-$", "", sub("BPGraph", "-", expts[[what]]))
@@ -1538,11 +1538,10 @@ and in Figure~\ref{fig-pfppfnFiltSep} for the filtered data.
   
 for(what in names(expts)) {
   plot(c(0, xmax[what]), c(0,1), type="n", xlab=expression(p[FP]), 
-         ylab=expression(p[FN]), 
-         main=paste(what, "- Filtered Data", sep=" "), 
-         sub=paste("(",letters[counter],")", sep=""), 
-         xlim=c(0,xmax[what]))
-    
+       ylab=expression(p[FN]), 
+       main=paste(letters[counter],". ",what, " - Filtered Data", sep=""), 
+       xlim=c(0,xmax[what]))
+  
     for (i in seq(along=expts[[what]])) {
       exnm = expts[[what]][i]    
       r = estErrProbMethodOfMoments(1:nmaxFun(degs1[, exnm]), 
