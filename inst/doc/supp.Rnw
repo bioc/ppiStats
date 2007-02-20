@@ -59,7 +59,7 @@
 \setkeys{Gin}{width=0.9\textwidth}
 <<loadlibs,echo=FALSE, results = hide>>=
 library("ppiStats")
-
+library("geneplotter")
 library("yeastExpData")
 library("lattice")
 library("grid")
@@ -264,7 +264,7 @@ baits and viable prey for each experimental dataset respectively.
 To represent all the data uniformly, the identifier for 
 each protein is given by its corresponding Open Reading Frame
 (ORF). If the ORF is unavailable, either the protein common name 
-or another identifier (IntAct accension code, SwissProt ID, etc) 
+or another identifier (IntAct accession code, SwissProt ID, etc) 
 is used. 
 
 <<ppiData, echo=TRUE>>=
@@ -289,9 +289,9 @@ library("yeastExpData")
 data(proteinProperties)
 @ 
 
-\section{Sampling}
+\section{Sampling and Coverage of the Interactome}
 \subsection{Analysis on the Bait/Prey Interactions}
-We addressed the issue of sampling initially by the viable bait 
+We addressed the issue of coverage initially by the viable bait 
 and viable prey population observed in the experimental datasets.
 From the directed graphs, we created the two lists 
 \Robject{viableBaits} and \Robject{viablePrey} by asking if
@@ -329,7 +329,7 @@ experimental dataset.
 
 In addition to the bar chart, we were able to generate a number of 
 sampling statistics on the Y2H and APMS datasets on a per experiment
-setting (cf Table~\ref{table:perexpt}), as well as between experiments
+setting (cf Table~\ref{ta:eda}), as well as between experiments
 of the same type, i.e. those which used the same system to test
 interactions (cf Table~\ref{ta:y2hComp} and Table~\ref{ta:apmsComp}). 
 
@@ -389,7 +389,7 @@ Sensitivity&& Probability that a true interaction is detected.
 It can be estimated by TP / P.\\
 Specificity&& Probability that a truely absent interaction is not 
 detected, estimated by TN / N.\\
-\raggedright{False Discovery Rate}&FDR&Informally, the expectated value
+\raggedright{False Discovery Rate}&FDR&Informally, the expected value
 of FP/(TP+FP)~\cite{Storey2002}.\\
 \raggedright{Positive Predictive Value}&PPV& Probability that 
 an observed interaction is indeed true. It can be estimated 
@@ -424,7 +424,7 @@ supplied with the main article as an additional file. It can
 also be found in the Scripts directory of the 
 \Rpackage{ppiStats} package. The file \Robject{hgGO.R} is a 
 script file which computes the conditional hypergeometric 
-testing on the GO directed acyclic graphs (DAG). The file
+testing on the GO directed acyclic graph (DAG). The file
 \Robject{hgPfam.R} computes the hypergeometric testing on 
 Pfam domains. 
 
@@ -881,7 +881,69 @@ do.call(rbind,
 ##
 @ 
 
+\newpage
 
+\subsection{Results: log(YEPD-abundance) as predictor}
+
+
+<<showYEPDAbundance,cache=FALSE,echo=FALSE>>=
+
+logistic.inlarge <-
+    lapply(allExptInfo, logisticTests,
+           pval.cutoff = 0.05,
+           formula = resp ~ log.yepd,
+           which.test = "large")
+
+logistic.outlarge <-
+    lapply(allExptInfo, logisticTests,
+           pval.cutoff = 0.05,
+           formula = resp ~ log.yepd,
+           which.test = "small")
+
+cat("Systematic := unusually large in-degree", fill = TRUE)
+do.call(rbind, 
+        lapply(logistic.inlarge,
+               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+cat("Systematic := unusually large out-degree", fill = TRUE)
+do.call(rbind, 
+        lapply(logistic.outlarge,
+               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+##
+@ 
+
+\newpage
+
+\subsection{Results: log(SD-abundance) as predictor}
+
+
+<<showYEPDAbundance,cache=FALSE,echo=FALSE>>=
+
+logistic.inlarge <-
+    lapply(allExptInfo, logisticTests,
+           pval.cutoff = 0.05,
+           formula = resp ~ log.sd,
+           which.test = "large")
+
+logistic.outlarge <-
+    lapply(allExptInfo, logisticTests,
+           pval.cutoff = 0.05,
+           formula = resp ~ log.sd,
+           which.test = "small")
+
+cat("Systematic := unusually large in-degree", fill = TRUE)
+do.call(rbind, 
+        lapply(logistic.inlarge,
+               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+cat("Systematic := unusually large out-degree", fill = TRUE)
+do.call(rbind, 
+        lapply(logistic.outlarge,
+               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+##
+@ 
 
 \newpage
 
@@ -1047,9 +1109,9 @@ xtable(cm, display=c("s","fg","fg","fg"), label="ta:cor",
 We plotted the values of each protein's CAI value against $(\log)$ the three 
 sets of measured abundance data to visulize this association 
 (Figure~\ref{fig-plotCor}). The most interesting fact is that the measured 
-abundance has the highest correlation with CAI. This seems to suggest that 
-the reference set of genes used to compute all CAI might be highly expressed 
-under SD medium.
+protein abundances in SD medium have the highest correlation with CAI. This 
+seems to suggest that the reference set of genes used to compute all CAI might 
+be highly expressed under SD medium.
 
 <<plotCor, echo=False, results=hide, fig=TRUE, include=FALSE, width=10, height=15>>=
 par(mfrow=c(3,1), lwd=2, cex.lab=2, cex.axis=1.5)
@@ -1079,7 +1141,8 @@ affected by a systematic bias of another experiment. To investigate this
 relationship, we created three $2 \times 2$ tables. Only two datasets 
 \cite{Gavin2006, Krogan2006} contained sufficient data points for this 
 analysis. The $2 \times 2$ tables were created where the overall 
-universe is VBP$_{C} = $ VBP$_{\mbs{G}} \mbox{ } \cap$ VBP$_{\mbs{K}}$.
+universe is $X$ =  VBP$_{\cite{Gavin2006}} \mbox{ } \cap$ 
+VBP$_{\cite{Krogan2006}}$.
 \cite{Gavin2006} index the rows; \cite{Krogan2006}, the columns. 
 In the $(2,2)$-entry of each table, we count the number of common 
 proteins affected by a bias in both experiments; in $(1,2)$-entry,
@@ -1171,11 +1234,22 @@ fisher.test(tab1WayIN)
 fisher.test(tab1WayOUT)
 @ 
 
-The Fisher tests show relatively small p-values and substantial
-odds ratio for all three $2 \times 2$ tables though the most 
-significant occurs for the one-sided binomial test when the 
-in-degree dominates the out-degree. 
-
+Because we are looking for reproducibility across experiments, 
+the two-way table \Robject{tab2Way} and the results from its
+corresponding Fisher's exact test are not particularly relevant.
+Indeed, we should only focus on the one-sided Binomial tests 
+and see if we such artifacts are reproducible across experiments.
+For those proteins which in-degree dominates out-degree (i.e.
+proteins tested in \Robject{tab1WayIN}), we 
+see an exceptionally small p-value, and so we should probably
+reject the null hypothesis that these two sets of systematic
+proteins are independent. For those proteins which out-degree
+dominates in-degree (cf \Robject{tab1WayOUT}), we see a less 
+significant p-value, and so 
+the association between these sets of proteins is not as strong
+as the prior sets. For the sake of completeness, all the tests
+show relatively small p-values as well as substantial odds 
+ratios.
 
 \subsection{Unreciprocated Degree Statistics}
 Our Binomial model allows us to determine proteins that might be subject 
@@ -1256,7 +1330,57 @@ For three plots that appear to have either a strong positive
 or negative concentration of data points in the distributions, we plotted 
 their densities (Figure~\ref{fig-zScoreDens}). 
 
+<<zScoreInt, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
+vbpGK <- intersect(vbp[["Gavin2006BPGraph"]], vbp[["Krogan2006BPGraph"]])
+smoothScatter(zScore1[["Gavin2006"]][vbpGK], zScore1[["Krogan2006"]][vbpGK], 
+              nrpoints=50, transformation=function(x) x^.15, 
+              ylab="z-score for Krogan 2006  Data", 
+              xlab="z-score for Gavin 2006 Data", 
+              main ="z-score Plot for Common VBP of Gavin2006 against Krogan2006")
+abline(h=0, v=0, col="red")
+@
 
+In addition to the density plots, we wanted to compare z-scores across experimental
+datasets. Currently, there are only two datasets~\cite{Gavin2006, Krogan2006} for
+which this comparison is insightful. First we found the set theoretic intersection
+of the two datasets, i.e. $X = VBP_{\cite{Gavin2006}}\cap VBP_{\cite{Krogan2006}}$, and
+from this new set of proteins, we plot the $z$-score computed from the data of 
+\cite{Gavin2006} against the $z$-score computed from the data of \cite{Krogan2006}
+(See Figure~\ref{fig-zScoreInt}). From the plot, we were also able to generate
+correlation coefficients between the $z$-scores \cite{Gavin2006} and the 
+$z$-scores from \cite{Krogan2006} restricted to $X$. 
+
+<<zScoreIntCor, echo=FALSE, results=hide>>=
+zCorP <- cor(zScore1[["Gavin2006"]][vbpGK], zScore1[["Krogan2006"]][vbpGK],
+             use = "pairwise.complete.obs", method="pearson")
+zCorK <- cor(zScore1[["Gavin2006"]][vbpGK], zScore1[["Krogan2006"]][vbpGK],
+             use = "pairwise.complete.obs", method="kendall")
+zCorS <- cor(zScore1[["Gavin2006"]][vbpGK], zScore1[["Krogan2006"]][vbpGK],
+             use = "pairwise.complete.obs", method="spearman")
+
+zCorM <- matrix(0,1,3)
+zCorM[1,] <- c(zCorP,zCorK,zCorS)
+rownames(zCorM) <- "Gavin/Krogan"
+colnames(zCorM) <- c("Pearson","Kendall","Spearman")
+@ 
+
+<<zCorTab, results=tex, echo=FALSE>>=
+xtable(zCorM, display=c("s","fg","fg","fg"), label="ta:zCor", 
+       tabular.environment="longtable", floating=FALSE, size="small",
+       caption = "This table gives both the Pearson, Kendall, and Spearman
+       correlation between the z-scores from the data of Gavin et al. 
+       and the z-scores from the data of Krogan et al. (both 2006).
+       The correlation is computed with the restriction to those VBP
+       in both datasets.")
+@ 
+
+\myincfig{fig-zScoreInt}{\textwidth}{This figure shows the $z$-score for the
+common VBP of Gavin et al.'s \cite{Gavin2006} data against Krogan et al.'s 
+\cite{Krogan2006} data. We can see from the figure that the highest concentration
+of $z$-scores is off the origin. There is also evidence that proteins which have
+relatively large $z$-scores in absolute value in one experiment will also have
+relatively large $z$-scores in the other.
+}
 
 \newpage
 %--------------------------------------------------
