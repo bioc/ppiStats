@@ -1257,8 +1257,8 @@ cache(vbpStochastic <- lapply(vbpGraph, function(x) {if(length(nodes(x))!=0)
 cache(vbpSystematic <- mapply(function(x,y){setdiff(nodes(x),y)},
                         vbpGraph,vbpStochastic))
 
-exp1 <- vbp[[11]]
-exp2 <- vbp[[12]]
+exp1 <- vbp[["Gavin2006BPGraph"]]
+exp2 <- vbp[["Gavin2006BPGraph"]]
 x <- intersect(exp1, exp2)
 y <- matrix(0, nrow=length(x), ncol=2)
 rownames(y) <- x
@@ -1324,8 +1324,8 @@ fisher.test(tab1WayOUT)
 @ 
 
 <<gkTest, echo=FALSE, results=hide>>=
-kSG <- subGraph(x, get("Krogan2006BPGraph"))
-gSG <- subGraph(x, get("Gavin2006BPGraph"))
+cache(kSG <- subGraph(x, get("Krogan2006BPGraph")))
+cache(gSG <- subGraph(x, get("Gavin2006BPGraph")))
 g1 <- idStochastic(kSG, bpGraph=TRUE)
 k1 <- idStochastic(gSG, bpGraph=TRUE)
 g2 <- setdiff(x, g1)
@@ -1370,7 +1370,7 @@ ta2Way <- table(zz$Gavin06, zz$Krogan06)
 
 ta1WayIN <- table(zz1$Gavin06, zz1$Krogan06)
 
-ta1WayOUT <- table(z2$Gavin06, z2$Krogan06)
+ta1WayOUT <- table(zz2$Gavin06, zz2$Krogan06)
 @
 
 The previous tables used each's experiments VBP subgraph to find proteins which
