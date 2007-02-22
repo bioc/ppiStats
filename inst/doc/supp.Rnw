@@ -1323,6 +1323,74 @@ fisher.test(tab1WayIN)
 fisher.test(tab1WayOUT)
 @ 
 
+<<gkTest, echo=FALSE, results=hide>>=
+kSG <- subGraph(x, get("Krogan2006BPGraph"))
+gSG <- subGraph(x, get("Gavin2006BPGraph"))
+g1 <- idStochastic(kSG, bpGraph=TRUE)
+k1 <- idStochastic(gSG, bpGraph=TRUE)
+g2 <- setdiff(x, g1)
+k2 <- setdiff(x, k1)
+
+cache(dsG <- calcInOutDegStats(gSG))
+cache(dsK <- calcInOutDegStats(kSG))
+
+gLI <- names(which((dsG$inDegreeMinusOutDegree)[g2] > 0))
+gLO <- names(which((dsG$inDegreeMinusOutDegree)[g2] < 0))
+
+kLI <- names(which((dsK$inDegreeMinusOutDegree)[k2] > 0))
+kLO <- names(which((dsK$inDegreeMinusOutDegree)[k2] < 0))
+
+indG <- x %in% g2
+indK <- x %in% k2
+indG1 <- x %in% gLI
+indK1 <- x %in% kLI
+indG2 <- x %in% gLO
+indK2 <- x %in% kLO
+
+yy <- matrix(0, nrow=length(x), ncol=2)
+rownames(yy) <- x
+colnames(yy) <- c("Gavin06","Krogan06")
+yy1 <- yy
+yy2 <- yy
+
+yy[indG, 1] <- 1
+yy[indK, 2] <- 1
+zz <- data.frame(yy)
+
+yy1[indG1, 1] <- 1
+yy1[indK1, 2] <- 1
+zz1 <- data.frame(yy1)
+
+yy2[indG2, 1] <- 1
+yy2[indK2, 2] <- 1
+zz2 <- data.frame(yy2)
+
+ta2Way <- table(zz$Gavin06, zz$Krogan06)
+
+
+ta1WayIN <- table(zz1$Gavin06, zz1$Krogan06)
+
+ta1WayOUT <- table(z2$Gavin06, z2$Krogan06)
+@
+
+The previous tables used each's experiments VBP subgraph to find proteins which
+are suspected of having a systematic bias. We then restricted to $X$ to calculate
+two way tables based on these proteins. In the following tables, we first 
+restrict to the node induced subgraph induced by $X$ for each experiment, and then 
+seach for proteins affected by systematic bias. We then create two way tables 
+based on these proteins and see whether or not these sets are independent.
+
+<<newTables>>= 
+ta2Way
+ta1WayIN
+ta1WayOUT
+@ 
+
+<<newFishers>>=
+fisher.test(ta2Way)
+fisher.test(ta1WayIN)
+fisher.test(ta1WayOUT)
+@ 
 Because we are looking for reproducibility across experiments, 
 the two-way table \Robject{tab2Way} and the results from its
 corresponding Fisher's exact test are not particularly relevant.
@@ -1379,6 +1447,10 @@ dens <- lapply(zScore1, density)
 sh <- lapply(zScore1, shorth)
 @ 
 
+<<zScoreNew, echo=FALSE, results=hide>>=
+zG <- normFunc(dsG[["unrecipInDegree"]], dsG[["unrecipOutDegree"]])
+zK <- normFunc(dsK[["unrecipInDegree"]], dsK[["unrecipOutDegree"]])
+@ 
 
 <<zScoreHist, fig=TRUE, width=10, height=14, echo=FALSE, results=hide, include=FALSE>>=
 
@@ -1420,8 +1492,8 @@ or negative concentration of data points in the distributions, we plotted
 their densities (Figure~\ref{fig-zScoreDens}). 
 
 <<zScoreInt, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
-vbpGK <- intersect(vbp[["Gavin2006BPGraph"]], vbp[["Krogan2006BPGraph"]])
-smoothScatter(zScore1[["Gavin2006"]][vbpGK], zScore1[["Krogan2006"]][vbpGK], 
+
+smoothScatter(zScore1[["Gavin2006"]][x], zScore1[["Krogan2006"]][x], 
               nrpoints=50, transformation=function(x) x^.15, 
               ylab="z-score for Krogan 2006  Data", 
               xlab="z-score for Gavin 2006 Data", 
@@ -1429,6 +1501,14 @@ smoothScatter(zScore1[["Gavin2006"]][vbpGK], zScore1[["Krogan2006"]][vbpGK],
 abline(h=0, v=0, col="red")
 @
 
+<<newZ, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
+smoothScatter(zG, zK, 
+              nrpoints=50, transformation=function(x) x^.15, 
+              ylab="z-score for Krogan 2006  Data", 
+              xlab="z-score for Gavin 2006 Data", 
+              main ="z-score Plot for Common VBP of Gavin2006 against Krogan2006")
+abline(h=0, v=0, col="red")
+@ 
 In addition to the density plots, we wanted to compare z-scores across experimental
 datasets. Currently, there are only two datasets~\cite{Gavin2006, Krogan2006} for
 which this comparison is insightful. First we found the set theoretic intersection
@@ -1440,11 +1520,11 @@ correlation coefficients between the $z$-scores \cite{Gavin2006} and the
 $z$-scores from \cite{Krogan2006} restricted to $X$. 
 
 <<zScoreIntCor, echo=FALSE, results=hide>>=
-zCorP <- cor(zScore1[["Gavin2006"]][vbpGK], zScore1[["Krogan2006"]][vbpGK],
+zCorP <- cor(zScore1[["Gavin2006"]][x], zScore1[["Krogan2006"]][x],
              use = "pairwise.complete.obs", method="pearson")
-zCorK <- cor(zScore1[["Gavin2006"]][vbpGK], zScore1[["Krogan2006"]][vbpGK],
+zCorK <- cor(zScore1[["Gavin2006"]][x], zScore1[["Krogan2006"]][x],
              use = "pairwise.complete.obs", method="kendall")
-zCorS <- cor(zScore1[["Gavin2006"]][vbpGK], zScore1[["Krogan2006"]][vbpGK],
+zCorS <- cor(zScore1[["Gavin2006"]][x], zScore1[["Krogan2006"]][x],
              use = "pairwise.complete.obs", method="spearman")
 
 zCorM <- matrix(0,1,3)
@@ -1469,6 +1549,11 @@ common VBP of Gavin et al.'s \cite{Gavin2006} data against Krogan et al.'s
 of $z$-scores is off the origin. There is also evidence that proteins which have
 relatively large $z$-scores in absolute value in one experiment will also have
 relatively large $z$-scores in the other.
+}
+
+\myincfig{fig-newZ}{\textwidth}{This figure shows the $z$-score for the
+common VBP of Gavin et al.'s \cite{Gavin2006} data against Krogan et al.'s 
+\cite{Krogan2006} data when we restrict first and then find the systematic proteins. 
 }
 
 \newpage
