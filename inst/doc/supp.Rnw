@@ -849,7 +849,7 @@ logisticTests <-
         as.numeric(switch(which.test,
                           large.indegree = ginfo$in.large.pval, 
                           small.indegree = ginfo$out.large.pval) < pval.cutoff)
-    glm(formula, ginfo, family = family, control = glm.control(maxit = 100) ,...)  
+    glm(formula, ginfo, family = family, control = glm.control(maxit = 150) ,...)  
 }
 
 
@@ -915,7 +915,7 @@ logistic.inlarge <-
            pval.cutoff = 0.05,
            formula = resp ~ log.yepd,
            which.test = "large")
-
+options(warn=-1)
 logistic.outlarge <-
     lapply(allExptInfo, logisticTests,
            pval.cutoff = 0.05,
@@ -932,6 +932,7 @@ do.call(rbind,
         lapply(logistic.outlarge,
                function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
 
+options(warn=0)
 ##
 @ 
 
@@ -1126,7 +1127,7 @@ mean measure of abundance of a yeast cell in a SD medium (Table~\ref{ta:cor}).
 The Spearman correlation seems to be the more accurate measure, not simply
  because it is larger, but because the relationship between CAI and 
 abundance is not linear \cite{Sharp1987} 
-(cf Figures~\ref{fig-plotCorGav, fig-plotCorKro}). 
+(cf Figures~\ref{fig-plotCorGav} and ~\ref{fig-plotCorKro}). 
 
 <<cor, results=hide, echo=FALSE>>=
 data(gfp)
@@ -1256,11 +1257,11 @@ analysis. The $2 \times 2$ tables were created where the overall
 universe is restricted to $X$ =  VBP$_{\cite{Gavin2006}} \mbox{ } \cap$ 
 VBP$_{\cite{Krogan2006}}$. \cite{Gavin2006} index the rows; \cite{Krogan2006}, 
 the columns. In the $(2,2)$-entry of each table, we count the number of common 
-proteins affected by a bias in both experiments (${|S_1 \cap S_2|}_X$); in 
+proteins affected by a bias in both experiments (${|S_1 \cap S_2|}$); in 
 $(1,2)$-entry, we count the number affected in \cite{Gavin2006} only 
-(${|S_1 \setminus S_2|}_X$); in $(2,1)$, the number in \cite{Krogan2006} only
-(${|S_2 \setminus S_1|}_X$); and in $(1,1)$, the number not 
-affected in both $({|S_1^c \cap S_2^c|_X})$. We can create three separate 
+(${|S_1 \setminus S_2|}$); in $(2,1)$, the number in \cite{Krogan2006} only
+(${|S_2 \setminus S_1|}$); and in $(1,1)$, the number not 
+affected in both $({|S_1^c \cap S_2^c|})$. We can create three separate 
 $2 \times 2$ tables based on which Binomial test we use:
 
 \begin{itemize}
@@ -1351,8 +1352,8 @@ fisher.test(tab1WayOUT)
 <<gkTest, echo=FALSE, results=hide>>=
 cache(kSG <- subGraph(x, get("Krogan2006BPGraph")))
 cache(gSG <- subGraph(x, get("Gavin2006BPGraph")))
-g1 <- idStochastic(kSG, bpGraph=TRUE)
-k1 <- idStochastic(gSG, bpGraph=TRUE)
+g1 <- idStochastic(gSG, bpGraph=TRUE)
+k1 <- idStochastic(kSG, bpGraph=TRUE)
 g2 <- setdiff(x, g1)
 k2 <- setdiff(x, k1)
 
@@ -1362,8 +1363,12 @@ cache(dsK <- calcInOutDegStats(kSG))
 gLI <- names(which((dsG$inDegreeMinusOutDegree)[g2] > 0))
 gLO <- names(which((dsG$inDegreeMinusOutDegree)[g2] < 0))
 
+
+
 kLI <- names(which((dsK$inDegreeMinusOutDegree)[k2] > 0))
 kLO <- names(which((dsK$inDegreeMinusOutDegree)[k2] < 0))
+
+
 
 indG <- x %in% g2
 indK <- x %in% k2
@@ -1371,6 +1376,9 @@ indG1 <- x %in% gLI
 indK1 <- x %in% kLI
 indG2 <- x %in% gLO
 indK2 <- x %in% kLO
+
+if (sum(indG1)+sum(indG2) != sum(indG)) {stop("1")}
+if (sum(indK1)+sum(indK2) != sum(indK)) {stop("2")}
 
 yy <- matrix(0, nrow=length(x), ncol=2)
 rownames(yy) <- x
@@ -1422,7 +1430,7 @@ the two-way tables \Robject{tab2Way} and \Robject(ta2Way) as
 well as the results from their 
 corresponding Fisher's exact test are not particularly relevant.
 Indeed, we should only focus on the one-sided Binomial tests 
-and see if we such artefacts are reproducible across experiments.
+and see if we such artifacts are reproducible across experiments.
 For those proteins which in-degree dominates out-degree, i.e.
 proteins tested in \Robject{tab1WayIN} and \Robject{ta1WayIN}, we 
 see an exceptionally small p-value for the former and a reasonably
@@ -1440,11 +1448,11 @@ p-values as well as substantial odds ratios.
 Our Binomial model allows us to determine proteins that might be subject 
 to a systematic bias of the experiment where each statistical test is 
 conducted on a per protein level. In addition to these series of statistical 
-test, we can describe experiment-wide artefacts by using the same binomial model 
+test, we can describe experiment-wide artifacts by using the same binomial model 
 for each protein. 
 
 For each protein $\rho$ with directed degree $(i_{\rho},o_{\rho})$ and 
-$n_{\rho} = i_{\rho}+o_{\rho}$, we can standardize the out-degree and 
+$n_{\rho} = i_{\rho}+o_{\rho}$, we can standardize the in-degree and 
 compute the corresponding \emph{z-score} for each protein:
 
 \begin{eqnarray}
