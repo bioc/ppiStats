@@ -1480,7 +1480,6 @@ dNames <- sub("-$", "", sub("BPGraph", "-", bpExperimentNames))
 dNames1 = dNames[-5]
 m = round(sapply(zScore1, mean), digit=3)
 dens <- lapply(zScore1, density)
-sh <- lapply(zScore1, shorth)
 @ 
 
 <<zScoreNew, echo=FALSE, results=hide>>=
@@ -1511,8 +1510,8 @@ par(mfrow = c(3,1))
 for(i in c(1, 10, 11)) {
   z = zScore1[[i]]
   xlim = c(-1,1)*max(abs(quantile(z, probs=c(0.01, 0.99))))
-  dens = density(z, adjust=2)
-  plot.density(dens, main=paste("z-scores for ", dNames1[i], sep=""), 
+  dens1 = density(z, adjust=2)
+  plot.density(dens1, main=paste("z-scores for ", dNames1[i], sep=""), 
     col="darkblue", xlab="z", xlim=xlim, lwd=2)
   abline(v=0,
          col="#808080", 
