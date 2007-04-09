@@ -90,7 +90,7 @@ nI  <- unlist(eapply(bpGraphs, function(x)
                      {sum(sapply(x@edgeL, function(y) {length(y[[1]])}))}))[bpExperimentNames]
 nI2 <- unlist(eapply(bpGraphs, function(g) 
                      {d=degree(g); s=sum(d$inDegree); stopifnot(s==sum(d$outDegree)); return(s)}))
-numInteractions <- unlist(eapply(bpGraphs, function(g) sum(degree(g)$inDegree)))
+numInteractions <- unlist(eapply(bpGraphs, function(g) sum(degree(g)$inDegree)))[bpExperimentNames]
 
 ## eventually, nI and nI2 can be dropped:
 stopifnot(identical(sort(as.integer(nI)), sort(as.integer(nI2))), 
@@ -639,8 +639,8 @@ $p$ in the $(n_{i}, n_{o})$-plane. These will be used in the plots.
 <<scpFun, echo=FALSE, results=hide>>=
 pLevels = 1e-4
 stopifnot(length(pLevels)==1)## this particular pvalColor function assumes that
-pvalColors = function(x) brewer.pal(3, "Paired")[1+(x<pLevels)]
-  
+##pvalColors = function(x) brewer.pal(3, "Paired")[1+(x<pLevels)]
+pvalColors = function(x) brewer.pal(3, "Paired")[2]  
 ##  pvalColors = colorRampPalette(c("orange", "darkblue"))(length(pLevels)+2)[cut(x, c(0, pLevels, 1), include.lowest=TRUE)]
 
 scpFun = function(f, what) {
@@ -663,12 +663,12 @@ scpFun = function(f, what) {
        xlab=xlab, ylab=ylab, pch=20, main="",
        col=pvalColors(f$p))
 
-  for(k in 1:ncol(f$contours)) {
-    px = f$contours[,k]
-    py = (0:(length(px)-1)) - px
-    lines(trsf(px), trsf(py), col="#808080")
-    lines(trsf(py), trsf(px), col="#808080")
-  }
+##  for(k in 1:ncol(f$contours)) {
+ ##   px = f$contours[,k]
+  ##  py = (0:(length(px)-1)) - px
+   ## lines(trsf(px), trsf(py), col="#808080")
+    ##lines(trsf(py), trsf(px), col="#808080")
+  ##}
 }
 @ 
 
@@ -1189,19 +1189,19 @@ plot(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
      main=paste("Spearman Correlation Coefficient = ", round(c1S,digit=2), sep=""),
      col=ifelse(pN1 %in% setdiff(vbp[["Gavin2006BPGraph"]] ,
        rownames(mget("Gavin2006BPGraph", bpRed)[[1]])), "red", "blue"))
-abline(coef(0,c1S), col="white")
+##abline(coef(0,c1S), col="white")
 plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
      xlab = "CAI value", ylab="Log Protein Abundance in YEPD", 
      main=paste("Spearman Correlation Coefficient = ", round(c2S,digit=2), sep=""),
      col=ifelse(pN2 %in% setdiff(vbp[["Gavin2006BPGraph"]] ,
        rownames(mget("Gavin2006BPGraph", bpRed)[[1]])), "red", "blue"))
-abline(coef(0,c2S), col="white")
+##abline(coef(0,c2S), col="white")
 plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
      xlab="CAI value", ylab="Log Protein Abundance in SD", 
      main=paste("Spearman Correlation Coefficient = ", round(c3S,digit=2), sep=""),
      col=ifelse(pN2 %in% setdiff(vbp[["Gavin2006BPGraph"]] ,
        rownames(mget("Gavin2006BPGraph", bpRed)[[1]])), "red", "blue"))
-abline(coef(0,c3S), col="white")
+##abline(coef(0,c3S), col="white")
 @
 
 \myincfig{fig-plotCorGav}{\textwidth}{Plots of CAI against $\log$ of the three measured 
@@ -1215,19 +1215,19 @@ plot(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
      main=paste("Spearman Correlation Coefficient = ", round(c1S,digit=2), sep=""),
      col=ifelse(pN1 %in% setdiff(vbp[["Krogan2006BPGraph"]] ,
        rownames(mget("Krogan2006BPGraph", bpRed)[[1]])), "red", "blue"))
-abline(coef(0,c1S), col="white")
+##abline(coef(0,c1S), col="white")
 plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
      xlab = "CAI value", ylab="Log Protein Abundance in YEPD", 
      main=paste("Spearman Correlation Coefficient = ", round(c2S,digit=2), sep=""),
      col=ifelse(pN2 %in% setdiff(vbp[["Krogan2006BPGraph"]] ,
        rownames(mget("Krogan2006BPGraph", bpRed)[[1]])), "red", "blue"))
-abline(coef(0,c2S), col="white")
+##abline(coef(0,c2S), col="white")
 plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
      xlab="CAI value", ylab="Log Protein Abundance in SD", 
      main=paste("Spearman Correlation Coefficient = ", round(c3S,digit=2), sep=""),
      col=ifelse(pN2 %in% setdiff(vbp[["Krogan2006BPGraph"]] ,
        rownames(mget("Krogan2006BPGraph", bpRed)[[1]])), "red", "blue"))
-abline(coef(0,c3S), col="white")
+##abline(coef(0,c3S), col="white")
 @
 
 \myincfig{fig-plotCorKro}{\textwidth}{Plots of CAI against $\log$ of the three measured 
