@@ -321,8 +321,7 @@ for(g in bpExperimentNames) {
 return(vbp)
 }
 
-cache(vbp <- getVBP())
-
+vbp <- getVBP()
 
 @  
 
@@ -558,10 +557,7 @@ the package \Rpackage{ppiStats}.
 
 
 
-<<bpMat, echo=FALSE, results=hide, cache=TRUE>>=
-
-
-
+<<bpMat, echo=FALSE, results=hide>>=
 makeBPMat <- function(){
   test <- mapply(intersect, viableBaits, viablePrey)
   bpMat = new.env(parent=globalenv(), hash=FALSE)
@@ -586,8 +582,7 @@ makeBPMat <- function(){
   return(bpMat)
 }
 
-cache(bpMat <- makeBPMat())
-
+bpMat <- makeBPMat()
 @
 
 %----------------------------------------
@@ -757,7 +752,7 @@ data(proteinProperties)
 data(fcabundance)
 @ 
 
-<<init,results=hide,echo=FALSE,cache=TRUE>>=
+<<init,results=hide,echo=FALSE,cache=FALSE>>=
 
 
 ## The ultimate goal here is to do enough to see if unrecipInDegree is
@@ -862,7 +857,7 @@ logisticTests <-
 
 \subsection{Results: log(abundance) as predictor}
 
-<<calc,echo=FALSE,results=hide,cache=TRUE>>=
+<<calc,echo=FALSE,results=hide,cache=FALSE>>=
 
 exptsToTry <- bpExperimentNames[bpExperimentNames != "Zhao2005BPGraph"]
 
@@ -1273,14 +1268,13 @@ $2 \times 2$ tables based on which Binomial test we use:
 \end{itemize}
 
 <<twoBytwo, echo=FALSE, results=hide>>=
+vbpGraph <- mapply(function(x,y){subGraph(x, get(y))},vbp,bpExperimentNames)
 
-cache(vbpGraph <- mapply(function(x,y){subGraph(x, get(y))},vbp,bpExperimentNames))
 
-
-cache(vbpStochastic <- lapply(vbpGraph, function(x) {if(length(nodes(x))!=0) 
-                                                 idStochastic(x, bpGraph=TRUE)}))
-cache(vbpSystematic <- mapply(function(x,y){setdiff(nodes(x),y)},
-                        vbpGraph,vbpStochastic))
+vbpStochastic <- lapply(vbpGraph, function(x) {if(length(nodes(x))!=0) 
+                                                 idStochastic(x, bpGraph=TRUE)})
+vbpSystematic <- mapply(function(x,y){setdiff(nodes(x),y)},
+                        vbpGraph,vbpStochastic)
 
 
 exp1 <- vbp[["Gavin2006BPGraph"]]
@@ -1292,8 +1286,8 @@ colnames(y) <- c("Gavin06","Krogan06")
 y1 <- y
 y2 <- y
 
-cache(dG <- calcInOutDegStats(vbpGraph[["Gavin2006BPGraph"]]))
-cache(dK <- calcInOutDegStats(vbpGraph[["Krogan2006BPGraph"]]))
+dG <- calcInOutDegStats(vbpGraph[["Gavin2006BPGraph"]])
+dK <- calcInOutDegStats(vbpGraph[["Krogan2006BPGraph"]])
 
 gavLargeSysIn <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[["Gavin2006BPGraph"]]] > 0))
 gavLargeSysOut <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[["Gavin2006BPGraph"]]] < 0))
@@ -1350,15 +1344,15 @@ fisher.test(tab1WayOUT)
 @ 
 
 <<gkTest, echo=FALSE, results=hide>>=
-cache(kSG <- subGraph(x, get("Krogan2006BPGraph")))
-cache(gSG <- subGraph(x, get("Gavin2006BPGraph")))
+kSG <- subGraph(x, get("Krogan2006BPGraph"))
+gSG <- subGraph(x, get("Gavin2006BPGraph"))
 g1 <- idStochastic(gSG, bpGraph=TRUE)
 k1 <- idStochastic(kSG, bpGraph=TRUE)
 g2 <- setdiff(x, g1)
 k2 <- setdiff(x, k1)
 
-cache(dsG <- calcInOutDegStats(gSG))
-cache(dsK <- calcInOutDegStats(kSG))
+dsG <- calcInOutDegStats(gSG)
+dsK <- calcInOutDegStats(kSG)
 
 gLI <- names(which((dsG$inDegreeMinusOutDegree)[g2] > 0))
 gLO <- names(which((dsG$inDegreeMinusOutDegree)[g2] < 0))
@@ -1473,7 +1467,7 @@ if("Zhao2005BPGraph" %in% names(vbpGraph)){
   rm <- which(names(vbpGraph) == "Zhao2005BPGraph")
   vbpSG <- vbpGraph[-rm]
 }
-cache(deg <- lapply(vbpSG, calcInOutDegStats))
+deg <- lapply(vbpSG, calcInOutDegStats)
 zScore <- lapply(deg, function(x) normFunc(x[["unrecipInDegree"]], x[["unrecipOutDegree"]]))
 zScore1 <- lapply(zScore, function(x) x[!is.na(x)])
 dNames <- sub("-$", "", sub("BPGraph", "-", bpExperimentNames))
