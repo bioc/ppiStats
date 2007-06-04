@@ -1276,6 +1276,7 @@ vbpStochastic <- lapply(vbpGraph, function(x) {if(length(nodes(x))!=0)
 vbpSystematic <- mapply(function(x,y){setdiff(nodes(x),y)},
                         vbpGraph,vbpStochastic)
 
+proportion <- mapply(function(x,y) length(x)/length(y),vbpSystematic,vbp)
 
 exp1 <- vbp[["Gavin2006BPGraph"]]
 exp2 <- vbp[["Krogan2006BPGraph"]]
