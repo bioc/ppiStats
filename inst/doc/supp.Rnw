@@ -99,8 +99,8 @@ rm(list=c("nI", "nI2"))
  
 ## need to find homodimers
 
-numCB <- c(NA,NA,NA,NA,NA,NA,NA,600,589,165,1993,2357)
-numTB <- c(6604,31,22,100,1,6604,192,725,1739,165,6466,4562)
+numCB <- c(NA,NA,NA,NA,NA,NA,NA,600,589,165,1993,2357, NA)
+numTB <- c(6604,31,22,100,1,6604,192,725,1739,165,6466,4562, 6604)
 
 EDA <- data.frame(
  
