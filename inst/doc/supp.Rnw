@@ -1501,8 +1501,8 @@ Only the \cite{Ito2001, Gavin2006, Krogan2006} plots showed
 distinct and approximately unimodal distributions.
 
 <<zScoreDens, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
-par(mfrow = c(3,1))
-for(i in c(1, 10, 11)) {
+par(mfrow = c(4,1))
+for(i in c(1, 10, 11, 12)) {
   z = zScore1[[i]]
   xlim = c(-1,1)*max(abs(quantile(z, probs=c(0.01, 0.99))))
   dens1 = density(z, adjust=2)
@@ -1856,7 +1856,7 @@ and in Figure~\ref{fig-pfppfnFiltSep} for the filtered data.
 
 
 <<pfppfnAll2gether, echo=FALSE, fig=TRUE, eps=FALSE,include=FALSE,width=10,height=15, results=hide>>=
-  colors = brewer.pal(6, "Set1")
+  colors = brewer.pal(7, "Set1")
   par(mfrow=c(2,2), pty="s", lwd=2)
   expts = list(APMS = grep("^Krogan|^Gavin|^Ho", colnames(degs), 
                  value=TRUE), Y2H = grep("^Ito|^Uetz|^Cagney|^Tong|^Hazbun", 
@@ -1942,11 +1942,11 @@ The result of this is plotted in Figure~\ref{fig-pfppfnAll2gether}.
 if("Zhao2005BPGraph" %in% names(vbp)){
   ind <- which(names(vbp) == "Zhao2005BPGraph")
   vbp <- vbp[-ind]}
-stats <- matrix(0,11,7)
+stats <- matrix(0,12,7)
 stats[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow) 
 stats[,2] <- choose(stats[,1], 2)
 stats[,3] <-  c(.0008, .04, .07, .016, .003, .015, .004, .005, 
-                .012, .0017, .0019)
+                .012, .0017, .0019, .0025)
 stats[,4] <- round(stats[,2]*stats[,3]*(1-stats[,3]))
 stats[,5] <- round(stats[,2]*stats[,3]^2, digits=2)
 stats[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
@@ -1957,10 +1957,10 @@ stats
 @ 
 
 <<pfnStats, echo=FALSE, results=hide>>=
-stats2 <- matrix(0, 11, 7)
+stats2 <- matrix(0, 12, 7)
 stats2[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow)
-stats2[,2] <- c(1200, 8, 2, 20, 78, 34, 584, 649, 223, 2429, 11744)
-stats2[,3] <- c(.76, 0.39, 0.3, .55, .65, .55, .44, .68, .37, .44, .8)
+stats2[,2] <- c(1200, 8, 2, 20, 78, 34, 584, 649, 223, 2429, 11744, 100)
+stats2[,3] <- c(.76, 0.39, 0.3, .55, .65, .55, .44, .68, .37, .44, .8, .38)
 stats2[,4] <- round(stats2[,2]*stats2[,3]*(1-stats2[,3]))
 stats2[,5] <- round(stats2[,2]*stats2[,3]^2)
 stats2[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
@@ -2152,16 +2152,19 @@ xtable(EDA, display = c("s","d","d", "d","f", "d", "d", "f", "f", "d", "f"),
 @ 
 
 <<commProteinsY2H, echo=FALSE, results=hide>>=
-commProtsY2H <- matrix(0, nrow = 7, ncol=7)
-dimnames(commProtsY2H) <- list(dNames[1:7], dNames[1:7])
-for(i in 1:7){
-    for (j in i:7){
-        commProtsY2H[i,j] <- length(intersect(viableBaits[[i]], viableBaits[[j]]))
+commProtsY2H <- matrix(0, nrow = 8, ncol=8)
+dimnames(commProtsY2H) <- list(c(dNames[1:7], dNames[13]), c(dNames[1:7], dNames[13]))
+vBaits1 <- c(viableBaits[1:7], viableBaits[13])
+vPrey1 <- c(viablePrey[1:7], viablePrey[13])
+
+for(i in 1:length(vBaits1)){
+    for (j in i:length(vBaits1)){
+        commProtsY2H[i,j] <- length(intersect(vBaits1[[i]], vBaits1[[j]]))
 
     }    
 
     for(k in 1:i){
-        commProtsY2H[i,k] <- length(intersect(viablePrey[[i]], viablePrey[[k]]))
+        commProtsY2H[i,k] <- length(intersect(vPrey1[[i]], vPrey1[[k]]))
     }
 }
 diag(commProtsY2H) <- as.numeric(NA)
@@ -2173,7 +2176,7 @@ blah = function(x) paste(
   "of common viable prey.")
 @ 
 <<printCommProtsY2H, echo=FALSE, results=tex>>=
-xtable(commProtsY2H, display=c("s", "d", "d", "d", "d", "d", "d", "d"),
+xtable(commProtsY2H, display=c("s", "d", "d", "d", "d", "d", "d", "d", "d"),
                  label="ta:y2hComp", caption = blah("Y2H"),
                  tabular.environment="longtable", floating=FALSE, size="small" )
 @ 
