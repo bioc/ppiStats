@@ -1502,7 +1502,7 @@ distinct and approximately unimodal distributions.
 
 <<zScoreDens, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
 par(mfrow = c(4,1))
-for(i in c(1, 10, 11, 12)) {
+for(i in c(1, 12, 10, 11)) {
   z = zScore1[[i]]
   xlim = c(-1,1)*max(abs(quantile(z, probs=c(0.01, 0.99))))
   dens1 = density(z, adjust=2)
