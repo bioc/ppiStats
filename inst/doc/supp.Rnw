@@ -68,7 +68,8 @@ library("xtable")
 library("RColorBrewer")
 data("proteinProperties")
 library("Matrix")
-options(warn=0, error=recover, width=63)
+yeastGenome <- names(as.list(YEASTALIAS))
+options(warn=-1, error=recover, width=63)
 @ 
 
 <<ppiData, echo=FALSE, results=hide>>=
@@ -176,7 +177,8 @@ simply like the code without the surrounding text, you can call
 Rtangle on the supp.Rnw file to generate a script file called supp.R.
 
 \section{Obtaining the PPI Data}
-We begin by detailing the methods by which we obtained the 12 protein 
+We begin by detailing the methods by which we obtained the 
+\Sexpr{length(bpExperimentNames)} protein 
 interaction datasets. We wanted data that had two properties: 1. 
 information on the bait/prey data is preserved and 2. the prey population 
 is documented as genome-wide. We downloaded the protein 
@@ -263,9 +265,9 @@ of the digraph objects. In addition, two list objects (called
 \Robject{viableBaits} and \Robject{viablePrey}) contain the viable
 baits and viable prey for each experimental dataset respectively.
 To represent all the data uniformly, the identifier for 
-each protein is given by its corresponding Open Reading Frame
-(ORF). If the ORF is unavailable, either the protein common name 
-or another identifier (IntAct accession code, SwissProt ID, etc) 
+each protein is given by its corresponding Gene Locus Name. 
+If the Gene Locus Name is unavailable, either the protein common name 
+or another identifier (IntAct accession code, UniProt ID, etc) 
 is used. We give some example code to show how to access this
 data.
 
@@ -280,8 +282,7 @@ gavin02@nodes[1:4]
 In addition to \Rpackage{ppiData}, another R-data package, 
 \Rpackage{yeastExpData}, and the R package \Rpackage{ppiStats}
 were generated. \Rpackage{yeastExpData} contains R objects that
-contains published data on protein abundance.
-yeast GFP fusion data, and 
+contains published data on protein abundance. Yeast GFP fusion data, and 
 a R dataframe consisting of 33 other yeast protein properties
 obtained from SGD (the dataframe is called \Robject{proteinProperties}). 
 The \Rpackage{ppiStats} package contains all the statistical methods 
@@ -429,7 +430,7 @@ the interaction is tested.}.
 We wanted to ascertain if the viably tested proteins showed
 signs of being affected by a coverage bias in the experimental assay. 
 To investigate, we used the conditional hypergeometric tests
-described by \cite{Falcon2006} to test for over/under 
+described by \cite{falcon2006} to test for over/under 
 representation in GO categories. Using the R software packages
 \Rpackage{Category} and \Rpackage{GOstats}, we were able
 to asses these questions. For our purposes, we used a p-value 
@@ -446,7 +447,36 @@ also be found in the Scripts directory of the
 script file which computes the conditional hypergeometric 
 testing on the GO directed acyclic graph (DAG). The file
 \Robject{hgPfam.R} computes the hypergeometric testing on 
-Pfam domains. 
+Pfam domains. Running these scripts will generate several 
+\textit{.html} files which provide the results to the 
+hypergeometric analysis.
+
+We provide one example of the hypergeometric test in the following 
+code chunck:
+
+<<hgTest>>=
+
+geneSet1 <- viableBaits[[length(viableBaits)]]
+parameter1 <- ppiBuildParams4GO(geneSet = geneSet1, universe = yeastGenome,
+                                direction = "over", ontology="CC", cond=
+                                TRUE, pThresh=0.01)
+hg1 <- ppiHGTest4GO(parameter1, filename = names(viableBaits)[1],
+                    label = names(viableBaits)[1], 
+                    typeGeneSet = "Viable Baits", cs = 50)
+parameter1@testDirection <- "under"
+hg2 <- ppiHGTest4GO(parameter1, filename = names(viableBaits)[1],
+                    label = names(viableBaits)[1], 
+                    typeGeneSet = "Viable Baits", cs = 50)
+pvalues(hg1)[pvalues(hg1)<hg1@pvalueCutoff]
+pvalues(hg2)[pvalues(hg2)<hg2@pvalueCutoff]
+
+@ 
+
+Even though the hypergeometric tests show that there are 
+\Sexpr{length(pvalues(hg1)[pvalues(hg1)<hg1@pvalueCutoff])} number
+of GO terms which are over-represented by the viable baits of 
+\textit{Ito-Core} dataset, we have decided only to investigate 
+those GO terms which at least 50 annotated genes.
 
 \section{Systematic Bias}
 %--------------------------------------------------
@@ -539,7 +569,7 @@ distribution
            p^{2n_{\mbs{none}}^v} \cdot 
   \frac{\delta^*!}{n_{r}^v! n_{u}^v! n_{\mbs{none}}^v!} \label{eq:multinomial}
 \end{eqnarray}
-where for notational convenience I used the abbreviations
+where for notational convenience we used the abbreviations
 $n_{\mbs{none}}^v=\delta^* - n_{r}^v - n_{u}^v$ 
 and $p\equiv \pfn$.
 
@@ -910,7 +940,7 @@ logistic.inlarge <-
            pval.cutoff = 0.05,
            formula = resp ~ log.yepd,
            which.test = "large")
-options(warn=-1)
+
 logistic.outlarge <-
     lapply(allExptInfo, logisticTests,
            pval.cutoff = 0.05,
@@ -927,7 +957,7 @@ do.call(rbind,
         lapply(logistic.outlarge,
                function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
 
-options(warn=0)
+
 ##
 @ 
 
@@ -1730,7 +1760,6 @@ plotpfppfn = function(r, main, qmax=0.8, what="2", add=FALSE, ...) {
   p = r[, paste("pfp", what, sep="")]
   q = r[, paste("pfn", what, sep="")]
   cl = which((p>=0) & (p<=1) & (q>=0) & (q<=1))
-  
   if(!add) {
     main = sprintf("%s -- sol. %s", main, what)
     if(any(cl, na.rm=TRUE)) {
@@ -1947,7 +1976,7 @@ stats[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow)
 stats[,2] <- choose(stats[,1], 2)
 stats[,3] <-  c(.0008, .04, .07, .016, .003, .015, .004, .005, 
                 .012, .0017, .0019, .0025)
-stats[,4] <- round(stats[,2]*stats[,3]*(1-stats[,3]))
+stats[,4] <- round(2*stats[,2]*stats[,3]*(1-stats[,3]))
 stats[,5] <- round(stats[,2]*stats[,3]^2, digits=2)
 stats[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
 stats[,7] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x*t(x))/2})
@@ -1961,7 +1990,7 @@ stats2 <- matrix(0, 12, 7)
 stats2[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow)
 stats2[,2] <- c(1200, 8, 2, 20, 78, 34, 584, 649, 223, 2429, 11744, 100)
 stats2[,3] <- c(.76, 0.39, 0.3, .55, .65, .55, .44, .68, .37, .44, .8, .38)
-stats2[,4] <- round(stats2[,2]*stats2[,3]*(1-stats2[,3]))
+stats2[,4] <- round(2*stats2[,2]*stats2[,3]*(1-stats2[,3]))
 stats2[,5] <- round(stats2[,2]*stats2[,3]^2)
 stats2[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
 stats2[,7] <- sapply(as.list(bpRed)[names(vbp)], 
@@ -1983,7 +2012,7 @@ the number of expected FP observations that we calculate will all be for the wor
 case scenairo. Using the Multinomial error model, we generate $\pfp$'s for all
 the datasets. We can also generate the value for $m$ by assuming that $\pfn=0$,
 but for the sake of convenience, we will approximate $m$ by $N \choose 2$. 
-Unreciprocated FP errors can be estimated by $\pfp(1-\pfp)m$; reciprocated,
+Unreciprocated FP errors can be estimated by $2\pfp(1-\pfp)m$; reciprocated,
 by $\pfp^2m$. Lastly we provide the number of observed unreciprcated and
 reciprocated interactions to serve as a reference. These estimates can be found
 in Table~\ref{ta:pfp}
@@ -2003,7 +2032,7 @@ number of unreciprocated and reciprocated FN observations. We
 estimate $\pfn$ and $n$ by assuming that $\pfp=0$, and so, again we presume 
 that all errors are strictly FN. This makes $\pfn$ maximal, and this also 
 makes these estimates for FN errors in the worst case scenario. Similar to the
-FP estimates, unreciprocated FN errors are estimated by $\pfn(1-\pfn)n$; 
+FP estimates, unreciprocated FN errors are estimated by $2\pfn(1-\pfn)n$; 
 reciprocated by $\pfn^2n$. We also provide the number of observed unreciprcated 
 and reciprocated non-interacting protein pairs found within the datasets. 
 These estimates can be found in Table~\ref{ta:pfn}

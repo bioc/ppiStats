@@ -7,11 +7,14 @@ stochastic or systematic errors}
 \description{
   This function takes in either a bait to prey Graph (matrix) and,
   based on a binomial error model, partitions proteins identified as
-  either affected by systematic or stochastic error.
+  either affected by systematic or stochastic error. It is a wrapper 
+  function that will eventually call the qbinom function.
 }
 \usage{
-idSystematic(bpMat, viable, bpGraph = FALSE, pThresh = 0.01, pLevels = 1e-4, prob=0.5)
-idStochastic(bpMat, bpGraph = FALSE, pThresh = 0.01, pLevels = 1e-4, prob=0.5)
+idSystematic(bpMat, viable, bpGraph = FALSE, pThresh = 0.01, pLevels =
+1e-4, prob=0.5)
+idStochastic(bpMat, bpGraph = FALSE, pThresh = 0.01, pLevels =
+1e-4, prob=0.5)
 }
 
 \arguments{
@@ -23,9 +26,10 @@ idStochastic(bpMat, bpGraph = FALSE, pThresh = 0.01, pLevels = 1e-4, prob=0.5)
   as a graphNEL.}
   \item{pThresh}{The p-value threshold for which to partition stochastic
   or systematic errors}
-  \item{pLevels}{A numeric vector. It gives the levels to calculate the
+  \item{pLevels}{A numeric. It gives the levels to calculate the
     countours of the function in p in the (n-in, n-out)-plane}
-  \item{prob}{A numeric. The bias of the coin in the call to pbinom.}
+  \item{prob}{A numeric. The probability parameter in the call to the
+                     qbinom function.}
 }
 
 \value{
