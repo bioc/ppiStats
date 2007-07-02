@@ -22,7 +22,7 @@ calcInOutDegStats <- function(graphObj, homodimer=FALSE)
   unrecipIn <- colSums(unrecip)
   unrecipOut <- rowSums(unrecip)
   names(unrecipOut) <- names(unrecipIn)
-  totalUnrecip <- sum(unrecip)/2
+  totalUnrecip <- sum(unrecip)
   
   degStat <- list()
   degStat$inDegree <- inDegree
