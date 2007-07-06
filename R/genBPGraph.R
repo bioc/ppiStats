@@ -17,9 +17,15 @@ genBPGraph <- function(bpMat, directed=TRUE, bp=TRUE){
     bpMat1 <- matrix(0, length(baits), length(preys))
     dimnames(bpMat1) <- list(baits, preys)
     bpMat1[b,p] <- bpMat
+    if(!directed) {
+      bpMat1 <- bpMat1 + t(bpMat1)
+      mode(bpMat1) <- "logical"
+      mode(bpMat1) <- "numeric"
+    }
   }
 
   bpGraph <- as(bpMat1, "graphNEL")
+  
   bpGraph
   
 }
