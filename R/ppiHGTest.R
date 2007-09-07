@@ -18,8 +18,7 @@ ppiHGTest4GO <- function(parameter, filename, append=TRUE,
   results <- hyperGTest(parameter)
   keep <- any(pvalues(results)<results@pvalueCutoff)
   htmlReport(results, file = paste(filename, ".html", sep=""),
-             append = append, label = paste(label,": ", typeGeneSet, sep=""),
-             categorySize = cs)
+             append = append, label = paste(label,": ", typeGeneSet, sep=""))
   return(results)
   
 }
@@ -42,7 +41,6 @@ ppiHGTest4PFAM <- function(parameter, filename, append = TRUE,
   results <- hyperGTest(parameter)
   keep <- any(pvalues(results)<results@pvalueCutoff)
   htmlReport(results, file = paste(filename, ".html", sep=""),
-             append = append, label = paste(label,": ", typeGeneSet, sep=""),
-             categorySize = cs)
+             append = append, label = paste(label,": ", typeGeneSet, sep=""))
   return(results)
 }

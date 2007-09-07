@@ -60,14 +60,14 @@
 <<loadlibs,echo=FALSE, results = hide>>=
 library("ppiStats")
 library("geneplotter")
-library("yeastExpData")
+#library("yeastExpData")
 library("lattice")
 library("grid")
 library("Biobase")
 library("xtable")
 library("RColorBrewer")
-data("proteinProperties")
-library("Matrix")
+#data("proteinProperties")
+#library("Matrix")
 yeastGenome <- names(as.list(YEASTALIAS))
 options(warn=-1, error=recover, width=63)
 @ 
@@ -456,27 +456,23 @@ code chunck:
 
 <<hgTest>>=
 
-geneSet1 <- viableBaits[[length(viableBaits)]]
-parameter1 <- ppiBuildParams4GO(geneSet = geneSet1, universe = yeastGenome,
-                                direction = "over", ontology="CC", cond=
-                                TRUE, pThresh=0.01)
-hg1 <- ppiHGTest4GO(parameter1, filename = names(viableBaits)[1],
-                    label = names(viableBaits)[1], 
-                    typeGeneSet = "Viable Baits", cs = 50)
-parameter1@testDirection <- "under"
-hg2 <- ppiHGTest4GO(parameter1, filename = names(viableBaits)[1],
-                    label = names(viableBaits)[1], 
-                    typeGeneSet = "Viable Baits", cs = 50)
-pvalues(hg1)[pvalues(hg1)<hg1@pvalueCutoff]
-pvalues(hg2)[pvalues(hg2)<hg2@pvalueCutoff]
+#geneSet1 <- viableBaits[[length(viableBaits)]]
+#parameter1 <- ppiBuildParams4GO(geneSet = geneSet1, universe = yeastGenome,
+#                                direction = "over", ontology="CC", cond=
+#                                TRUE, pThresh=0.01, annot="YEAST.db")
+#hg1 <- ppiHGTest4GO(parameter1, filename = names(viableBaits)[1],
+#                    label = names(viableBaits)[1], 
+#                    typeGeneSet = "Viable Baits", cs = 50)
+#parameter1@testDirection <- "under"
+#hg2 <- ppiHGTest4GO(parameter1, filename = names(viableBaits)[1],
+#                    label = names(viableBaits)[1], 
+#                    typeGeneSet = "Viable Baits", cs = 50)
+#pvalues(hg1)[pvalues(hg1)<hg1@pvalueCutoff]
+#pvalues(hg2)[pvalues(hg2)<hg2@pvalueCutoff]
 
 @ 
 
-Even though the hypergeometric tests show that there are 
-\Sexpr{length(pvalues(hg1)[pvalues(hg1)<hg1@pvalueCutoff])} number
-of GO terms which are over-represented by the viable baits of 
-\textit{Ito-Core} dataset, we have decided only to investigate 
-those GO terms which at least 50 annotated genes.
+
 
 \section{Systematic Bias}
 %--------------------------------------------------
@@ -777,9 +773,9 @@ protein's properties.  Let $p$ be the true probability ($H_0: p =
 Regression is restricted to the subgraph of proteins that are VBP.
 
 <<setupLogReg,results=hide,echo=FALSE,results=hide>>=
-data(gfp)
-data(proteinProperties)
-data(fcabundance)
+#data(gfp)
+#data(proteinProperties)
+#data(fcabundance)
 @ 
 
 <<init,results=hide,echo=FALSE,cache=FALSE>>=
@@ -889,12 +885,12 @@ logisticTests <-
 
 <<calc,echo=FALSE,results=hide,cache=FALSE>>=
 
-exptsToTry <- bpExperimentNames[bpExperimentNames != "Zhao2005BPGraph"]
+#exptsToTry <- bpExperimentNames[bpExperimentNames != "Zhao2005BPGraph"]
 
-allExptInfo <- lapply(exptsToTry, degInfo)
-names(allExptInfo) <- exptsToTry
+#allExptInfo <- lapply(exptsToTry, degInfo)
+#names(allExptInfo) <- exptsToTry
 
-allExptInfo <- lapply(allExptInfo, binomTests)
+#allExptInfo <- lapply(allExptInfo, binomTests)
 
 
 ##
@@ -903,27 +899,27 @@ allExptInfo <- lapply(allExptInfo, binomTests)
 
 <<showAbundance,cache=FALSE,echo=FALSE>>=
 
-logistic.inlarge <-
-    lapply(allExptInfo, logisticTests,
-           pval.cutoff = 0.05,
-           formula = resp ~ log.abundance,
-           which.test = "large")
+#logistic.inlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.abundance,
+#           which.test = "large")
 
-logistic.outlarge <-
-    lapply(allExptInfo, logisticTests,
-           pval.cutoff = 0.05,
-           formula = resp ~ log.abundance,
-           which.test = "small")
+#logistic.outlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.abundance,
+#           which.test = "small")
 
-cat("Systematic := unusually large in-degree", fill = TRUE)
-do.call(rbind, 
-        lapply(logistic.inlarge,
-               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+#cat("Systematic := unusually large in-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.inlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
 
-cat("Systematic := unusually large out-degree", fill = TRUE)
-do.call(rbind, 
-        lapply(logistic.outlarge,
-               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+#cat("Systematic := unusually large out-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.outlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
 
 ##
 @ 
@@ -935,27 +931,27 @@ do.call(rbind,
 
 <<showYEPDAbundance,cache=FALSE,echo=FALSE>>=
 
-logistic.inlarge <-
-    lapply(allExptInfo, logisticTests,
-           pval.cutoff = 0.05,
-           formula = resp ~ log.yepd,
-           which.test = "large")
+#logistic.inlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.yepd,
+#           which.test = "large")
 
-logistic.outlarge <-
-    lapply(allExptInfo, logisticTests,
-           pval.cutoff = 0.05,
-           formula = resp ~ log.yepd,
-           which.test = "small")
+#logistic.outlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.yepd,
+#           which.test = "small")
 
-cat("Systematic := unusually large in-degree", fill = TRUE)
-do.call(rbind, 
-        lapply(logistic.inlarge,
-               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+#cat("Systematic := unusually large in-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.inlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
 
-cat("Systematic := unusually large out-degree", fill = TRUE)
-do.call(rbind, 
-        lapply(logistic.outlarge,
-               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+#cat("Systematic := unusually large out-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.outlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
 
 
 ##
@@ -968,27 +964,27 @@ do.call(rbind,
 
 <<showYEPDAbundance,cache=FALSE,echo=FALSE>>=
 
-logistic.inlarge <-
-    lapply(allExptInfo, logisticTests,
-           pval.cutoff = 0.05,
-           formula = resp ~ log.sd,
-           which.test = "large")
+#logistic.inlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.sd,
+#           which.test = "large")
 
-logistic.outlarge <-
-    lapply(allExptInfo, logisticTests,
-           pval.cutoff = 0.05,
-           formula = resp ~ log.sd,
-           which.test = "small")
+#logistic.outlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.sd,
+#           which.test = "small")
 
-cat("Systematic := unusually large in-degree", fill = TRUE)
-do.call(rbind, 
-        lapply(logistic.inlarge,
-               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+#cat("Systematic := unusually large in-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.inlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
 
-cat("Systematic := unusually large out-degree", fill = TRUE)
-do.call(rbind, 
-        lapply(logistic.outlarge,
-               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+#cat("Systematic := unusually large out-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.outlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
 
 ##
 @ 
@@ -1001,27 +997,27 @@ do.call(rbind,
 
 <<showLogCAI,cache=FALSE,echo=FALSE>>=
 
-logistic.inlarge <-
-    lapply(allExptInfo, logisticTests,
-           pval.cutoff = 0.05,
-           formula = resp ~ log.cai,
-           which.test = "large")
+#logistic.inlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.cai,
+#           which.test = "large")
 
-logistic.outlarge <-
-    lapply(allExptInfo, logisticTests,
-           pval.cutoff = 0.05,
-           formula = resp ~ log.cai,
-           which.test = "small")
+#logistic.outlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.cai,
+#           which.test = "small")
 
-cat("Systematic := unusually large in-degree", fill = TRUE)
-do.call(rbind, 
-        lapply(logistic.inlarge,
-               function(x) try(round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7))))
+#cat("Systematic := unusually large in-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.inlarge,
+#               function(x) try(round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7))))
 
-cat("Systematic := unusually large out-degree", fill = TRUE)
-do.call(rbind, 
-        lapply(logistic.outlarge,
-               function(x) try(round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7))))
+#cat("Systematic := unusually large out-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.outlarge,
+#               function(x) try(round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7))))
 
 ##
 @ 
@@ -1036,112 +1032,112 @@ proteins rejecting the 2-sided Binomial test.
 
 <<GavinMat, include=FALSE, echo=FALSE, results=hide>>=
 
-experiment <- "Gavin2006BPGraph"
-experiment1 <- "Krogan2006BPGraph"
+#experiment <- "Gavin2006BPGraph"
+#experiment1 <- "Krogan2006BPGraph"
 
-keep <- vbp[[experiment]] ## VBP only
-keep1 <- vbp[[experiment1]] ## VBP only
+#keep <- vbp[[experiment]] ## VBP only
+#keep1 <- vbp[[experiment1]] ## VBP only
 ### The following is interesting, in the sense that it gives 
 ### different-looking things in Krogan2006 and Gavin2006 
 
 ## keep <- viablePrey[[experiment]] 
 
-smat <- as(get(experiment), "sparseMatrix")[keep, keep]
+#smat <- as(get(experiment), "sparseMatrix")[keep, keep]
 
-ord.CAI <- order(proteinProperties[rownames(smat), "cai"])
-ord.random <- sample(seq_len(nrow(smat)))
+#ord.CAI <- order(proteinProperties[rownames(smat), "cai"])
+#ord.random <- sample(seq_len(nrow(smat)))
 
 
-mat.random <- 
+#mat.random <- 
 
-    image((smat - smat * t(smat))[ord.random, ord.random],
-          aspect = "iso",
-          xlab = "Prey",
-          ylab = "Bait",
-          main = "a. Random Order", 
-          colorkey = FALSE, sub = "Gavin 2006")
+#    image((smat - smat * t(smat))[ord.random, ord.random],
+#          aspect = "iso",
+#          xlab = "Prey",
+#          ylab = "Bait",
+#          main = "a. Random Order", 
+#          colorkey = FALSE, sub = "Gavin 2006")
           
-mat.CAI <- 
+#mat.CAI <- 
 
-    image((smat - smat * t(smat))[ord.CAI, ord.CAI],
-          aspect = "iso",
-          xlab = "Prey",
-          ylab = "Bait",
-          main = "b. Ordered By Ascending CAI", 
-          colorkey = FALSE, sub="Gavin 2006")
-
-
-smat1 <- as(get(experiment1), "sparseMatrix")[keep1, keep1]
-
-ord.CAI1 <- order(proteinProperties[rownames(smat1), "cai"])
-ord.random1 <- sample(seq_len(nrow(smat1)))
+#    image((smat - smat * t(smat))[ord.CAI, ord.CAI],
+#          aspect = "iso",
+#          xlab = "Prey",
+#          ylab = "Bait",
+#          main = "b. Ordered By Ascending CAI", 
+#          colorkey = FALSE, sub="Gavin 2006")
 
 
-mat.random1 <- 
+#smat1 <- as(get(experiment1), "sparseMatrix")[keep1, keep1]
 
-    image((smat1 - smat1 * t(smat1))[ord.random1, ord.random1],
-          aspect = "iso",
-          xlab = "Prey",
-          ylab = "Bait",
-          main = "a. Random Order", 
-          colorkey = FALSE, sub = "Krogan 2006")
+#ord.CAI1 <- order(proteinProperties[rownames(smat1), "cai"])
+#ord.random1 <- sample(seq_len(nrow(smat1)))
+
+
+#mat.random1 <- 
+
+#    image((smat1 - smat1 * t(smat1))[ord.random1, ord.random1],
+#          aspect = "iso",
+#          xlab = "Prey",
+#          ylab = "Bait",
+#          main = "a. Random Order", 
+#          colorkey = FALSE, sub = "Krogan 2006")
           
-mat.CAI1 <- 
+#mat.CAI1 <- 
 
-    image((smat1 - smat1 * t(smat1))[ord.CAI1, ord.CAI1],
-          aspect = "iso",
-          xlab = "Prey",
-          ylab = "Bait",
-          main = "b. Ordered By Ascending CAI", 
-          colorkey = FALSE, sub="Krogan 2006")
+#    image((smat1 - smat1 * t(smat1))[ord.CAI1, ord.CAI1],
+#          aspect = "iso",
+#          xlab = "Prey",
+#          ylab = "Bait",
+#          main = "b. Ordered By Ascending CAI", 
+#          colorkey = FALSE, sub="Krogan 2006")
 
 ##
 @ 
 
 
-\begin{figure}
-  \centering
+%\begin{figure}
+%  \centering
 
 <<GavinImages, fig=TRUE, width=10, height=7, echo=FALSE>>=
-par(mfrow = c(2,2))
-plot(mat.random, split = c(1, 1, 2, 1), more = TRUE)
-plot(mat.CAI, split = c(2, 1, 2, 1), more = FALSE)
+#par(mfrow = c(2,2))
+#plot(mat.random, split = c(1, 1, 2, 1), more = TRUE)
+#plot(mat.CAI, split = c(2, 1, 2, 1), more = FALSE)
 @ 
 
-       \caption{
-         \label{fig:caiplots}{
-           These plots present a view of the adjacency matrix for the VBP
-           derived from the Gavin et al's.~\cite{Gavin2006} experimental data set.
-           An interaction between bait $b$ and prey $p$ is recorded by a dark 
-           pixel in $(b,p)^{th}$ position of the matrix. The left panel has the
-           rows and columns randomly ordered while the
-           right panel has the rows and columns ordered by ascending
-           values of each protein's condon adaptation index (CAI).
-           Contrasting these two figures, we can ascertain that there is 
-           a relationship between bait/prey interactions and CAI. 
-           The relationship is based on proteins with 
-           large un-reciprocated in-degree since the right panel shows a dark 
-           vertical band. Had unreciprocated out-degree also been associated 
-           with CAI then there would be a similar horizontal band reflected
-           across the main diagonal of the matrix.
-           }
-       }
-     \end{figure}
+%       \caption{
+%         \label{fig:caiplots}{
+%           These plots present a view of the adjacency matrix for the VBP
+%           derived from the Gavin et al's.~\cite{Gavin2006} experimental data set.
+%           An interaction between bait $b$ and prey $p$ is recorded by a dark 
+%           pixel in $(b,p)^{th}$ position of the matrix. The left panel has the
+%           rows and columns randomly ordered while the
+%           right panel has the rows and columns ordered by ascending
+%           values of each protein's condon adaptation index (CAI).
+%           Contrasting these two figures, we can ascertain that there is 
+%           a relationship between bait/prey interactions and CAI. 
+%           The relationship is based on proteins with 
+%           large un-reciprocated in-degree since the right panel shows a dark 
+%           vertical band. Had unreciprocated out-degree also been associated 
+%           with CAI then there would be a similar horizontal band reflected
+%           across the main diagonal of the matrix.
+%           }
+%       }
+%     \end{figure}
 
-\begin{figure}
-\centering
+%\begin{figure}
+%\centering
 <<KroganImages, fig=TRUE, width=10, height=7, echo=FALSE>>=
-plot(mat.random1, split = c(1, 1, 2, 1), more = TRUE)
-plot(mat.CAI1, split = c(2, 1, 2, 1), more = FALSE)
+#plot(mat.random1, split = c(1, 1, 2, 1), more = TRUE)
+#plot(mat.CAI1, split = c(2, 1, 2, 1), more = FALSE)
 @ 
 
-\caption{
-         \label{fig:caiplots1}{
-           Same adjacency matrix plots for the Krogan et al's~\cite{Krogan2006}
-           data.
-           }
-       }
-     \end{figure}
+%\caption{
+%         \label{fig:caiplots1}{
+%           Same adjacency matrix plots for the Krogan et al's~\cite{Krogan2006}
+%           data.
+%           }
+%       }
+%     \end{figure}
 
 There has been a number of research articles that point to the relationship
 between CAI and protein abundance. To verify this fact, we computed both the
