@@ -75,8 +75,12 @@ degreeEstimates <- function(m,pTP,pFP){
 	degEst <- rep(0,length(nodeNames))
 	names(degEst) <- nodeNames
 
-	mRio <- getDegrees(m)
-    
+	stopifnot(all(m %in% 0:1))
+	m = m>0
+	mRio <- cbind(nr=rowSums(m & t(m)),no=rowSums(m & (!t(m))),
+			      ni=rowSums((!m) & t(m)))
+
+ 
 	mR <- mRio[,"nr"]
 	mU <- mRio[,"ni"] + mRio[,"no"]
 
