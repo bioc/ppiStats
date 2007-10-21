@@ -1,0 +1,2237 @@
+%
+% NOTE -- ONLY EDIT THE .Rnw FILE!!!  The .tex file is
+% likely to be overwritten.
+%
+% \VignetteIndexEntry{Using the package ppiStats}
+%\VignetteDepends{}
+%\VignettePackage{ppiStats}
+
+\documentclass[11pt]{article}    
+
+\usepackage{color}
+\definecolor{WildStrawberry}{rgb}{0.69803922,0.09411765,0.16862745}
+%\usepackage[%
+%baseurl={http://www.bioconductor.org},%
+%pdftitle={Supplementary Material for "Coverage and Error Models of 
+%  Protein-Protein Interaction Data by Directed Graph Analysis"},%
+%pdfauthor={Tony Chiang},%
+%pdfsubject={ppiStats},%
+%pdfkeywords={Bioconductor},%
+%spagebackref,bookmarks,colorlinks,linkcolor=WildStrawberry,citecolor=WildStrawberry,%
+%pagecolor=WildStrawberry,raiselinks,plainpages,pdftex]{hyperref}
+
+%----------------------------------------------------------------------
+\usepackage{subfigure}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{rotating}
+%% instead of \usepackage{Sweave}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{graphicx,ae,fancyvrb}
+\IfFileExists{upquote.sty}{\RequirePackage{upquote}}{}
+\setkeys{Gin}{width=0.8\textwidth}
+\DefineVerbatimEnvironment{Sinput}{Verbatim}{fontshape=sl}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}{}
+\DefineVerbatimEnvironment{Scode}{Verbatim}{fontshape=sl}
+\newenvironment{Schunk}{}{} 
+
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\mbs}[1]{{\mbox{\scriptsize #1}}}
+\newcommand{\pfp}{p_{\mbox{\scriptsize fp}}}
+\newcommand{\pfn}{p_{\mbox{\scriptsize fn}}}
+\newcommand{\ptp}{p_{\mbox{\scriptsize tp}}}
+\newcommand{\ptn}{p_{\mbox{\scriptsize tn}}}
+\newcommand{\ntot}{n_{\mbox{\scriptsize tot}}}
+
+\newcommand{\myincfig}[3]{%
+ \begin{figure}[tp] \begin{center}
+    \includegraphics[width=#2]{#1}
+    \caption{\label{#1}#3}
+ \end{center} \end{figure}
+}
+
+\SweaveOpts{prefix.string=fig}
+%----------------------------------------------------------------------
+
+\setkeys{Gin}{width=0.9\textwidth}
+<<loadlibs,echo=FALSE, results = hide>>=
+library("ppiStats")
+library("geneplotter")
+#library("yeastExpData")
+library("lattice")
+library("grid")
+library("Biobase")
+library("xtable")
+library("RColorBrewer")
+#data("proteinProperties")
+#library("Matrix")
+yeastGenome <- names(as.list(YEASTALIAS))
+options(warn=-1, error=recover, width=63)
+@ 
+
+<<ppiData, echo=FALSE, results=hide>>=
+library("ppiData")
+get(bpExperimentNames[8])
+bpGraphs = new.env(parent=globalenv(), hash=FALSE)
+data(list=bpExperimentNames, envir=bpGraphs)
+for(j in ls(bpGraphs))
+  assign(j, eval(get(j, env=bpGraphs)), env=bpGraphs)
+@ 
+
+<<createEDATable, echo=FALSE, results=hide>>=
+## remove the "BPGraph", but keep a "-" if it is followed by a number
+dNames <- sub("-$", "", sub("BPGraph", "-", bpExperimentNames))
+numVB <- listLen(viableBaits)
+numVP <- listLen(viablePrey)
+numVBP <- mapply(function(x,y) {length(intersect(x,y))}, viableBaits, viablePrey)
+nI  <- unlist(eapply(bpGraphs, function(x) 
+                     {sum(sapply(x@edgeL, function(y) {length(y[[1]])}))}))[bpExperimentNames]
+nI2 <- unlist(eapply(bpGraphs, function(g) 
+                     {d=degree(g); s=sum(d$inDegree); stopifnot(s==sum(d$outDegree)); return(s)}))
+numInteractions <- unlist(eapply(bpGraphs, function(g) sum(degree(g)$inDegree)))[bpExperimentNames]
+
+## eventually, nI and nI2 can be dropped:
+stopifnot(identical(sort(as.integer(nI)), sort(as.integer(nI2))), 
+          identical(sort(as.integer(nI)), sort(as.integer(numInteractions))))
+rm(list=c("nI", "nI2"))
+ 
+## need to find homodimers
+
+numCB <- c(NA,NA,NA,NA,NA,NA,NA,600,589,165,1993,2357, NA)
+numTB <- c(6604,31,22,100,1,6604,192,725,1739,165,6466,4562, 6604)
+
+EDA <- data.frame(
+ 
+ VB=numVB,
+ CB=numCB,
+ TB=numTB,
+ "VB/TB"=round(numVB/numTB, digit=2),
+ VP=numVP,
+ VBP=numVBP,
+ "VBP/BP"=round(numVBP/numVB, digit=2),
+ "VP/VB"=round(numVP/numVB,digit=2),
+ "TI"=numInteractions,
+"TI/VB"=round(numInteractions/numVB,digit=2), 
+check.names=FALSE,  row.names=dNames)
+
+@
+%"Ref."=I(paste("\\cite{", dNames, "}", sep="")),
+\begin{document}
+
+%----------------------------------------------------------------------
+\title{Supplementary Material for "Coverage and Error Models of 
+  Protein-Protein Interaction Data by Directed Graph Analysis"}
+% ---------------------------------------------------------------------
+
+\author{Tony Chiang 
+% \correspondingauthor$^{1,2}$%
+%  \email{Tony Chiang - tchiang@ebi.ac.uk}
+\and Denise Scholtens %$^3$%
+%       \email{Denise Scholtens - dscholtens@northwestern.edu}\
+\and Deepayan Sarkar% $^2$%
+%      \email{Deepayan Sarkar - dsarkar@fhcrc.org}\and
+\and Robert Gentleman%$^2$%
+%       \email{Robert Gentleman - rgentlem@fhcrc.org}\and
+\and Wolfgang Huber%$^1$%
+%       \email{Wolfgang Huber - huber@ebi.ac.uk}
+}
+
+\date{\today}
+\maketitle
+\tableofcontents
+
+\begin{abstract}
+This compendium serves as a supplementary source of materials for the
+analysis presented in \emph{Coverage and Error Models of Protein-Protein
+Interaction Data by Directed Graph Analysis}.
+We provide all necessary materials, methods, and code to reproduce
+the analysis, and present additional results.
+\end{abstract}
+
+\section{Introduction}
+This technical report accompanies the paper \emph{Coverage and Error
+Models of Protein-Protein Interaction Data by Directed Graph Analysis}
+by Chiang et al.  It explains all the steps taken to perform the
+analysis of protein interaction data described in that paper.  This
+report has been produced as a \emph{reproducible document}: it
+contains all the computer instructions to reproduce the analysis and
+to create the figures, tables and numeric results of the paper.  In
+addition, further analyses are produced that extend and support the
+main results described in the paper.
+
+The production of the reproducible document employs the computational
+system and language R and the packages \Rpackage{ppiStats},
+\Rpackage{ppiData}, and \Rpackage{yeastExpData}.  You will need R
+version 2.4.1 or greater together with recent versions of the three
+packages and some other add-on packages that they depend
+upon and which can be obtain from CRAN or Bioconductor.  To reproduce
+the computations shown here, you do not need to type them or
+copy-paste them from the PDF file; rather, you can take the file
+supp.Rnw in the doc directory of the \Rpackage{ppiStats} package, open
+it in a text editor, run it using the R command Sweave; and if you
+wish, modify the program it to your needs. Alternatively, if you would
+simply like the code without the surrounding text, you can call
+Rtangle on the supp.Rnw file to generate a script file called supp.R.
+
+\section{Obtaining the PPI Data}
+We begin by detailing the methods by which we obtained the 
+\Sexpr{length(bpExperimentNames)} protein 
+interaction datasets. We wanted data that had two properties: 1. 
+information on the bait/prey data is preserved and 2. the prey population 
+is documented as genome-wide. We downloaded the protein 
+interaction data of \cite{Ito2001, Uetz2000, Zhao2005, Cagney2001, 
+Tong2002, Hazbun2003, Gavin2006} from the \emph{IntAct} repository. 
+We obtained \cite{Gavin2002, Ho2002, Krogan2004, Krogan2006} from their 
+primary sources. Having obtained the bait/prey protein interaction
+data, we created an R data-package \Rpackage{ppiData} where we stored this 
+data. Each dataset is stored in \Rpackage{ppiData} as a directed 
+graph object. As an example, we have selected 4 proteins from the 
+dataset of \cite{Krogan2006} and rendered the vertex induced subgraph in
+Figure~\ref{fig:egKrogan06}.
+
+<<egKrogan06, fig=TRUE, width=3, height=3.5, prefix=FALSE, include=FALSE, echo=FALSE>>=
+
+proteinWanted <- c("YAL005C","YBR092C","YBR118W","YPR190C")
+cache(krogM <- as(get("Krogan2006BPGraph"), "matrix"))
+diag(krogM) <- 0
+cache(krogG <- as(krogM, "graphNEL"))
+subG <- subGraph(proteinWanted, krogG)
+
+par(mai=rep(0,4), lwd=2)
+stopifnot(identical(nodes(subG), c("YAL005C", "YBR092C", "YBR118W", "YPR190C")))
+trivialnames = c("SSA1", "PHO3", "TEF2", "RPC82C")
+plot(subG, "dot", nodeAttrs=makeNodeAttrs(subG, 
+  fillcolor=brewer.pal(9, "Pastel1")[c(2, 9, 2, 2)],
+  label=trivialnames, width="3", height="1.2",
+  shape="ellipse"))
+@ 
+\begin{figure}
+\centering
+\includegraphics[width=45mm]{egKrogan06}
+\caption{\label{fig:egKrogan06}% 
+  The graph shows the interaction data between four selected proteins from 
+  Krogan et al.'s experiment~\cite{Krogan2006}. The bi-directional edge 
+  between the ATPase \textit{SSA1} and the translational elongation factor 
+  \textit{TEF2} indicates that either one as a bait pulled down the 
+  other one as a prey. The directed edge from \textit{RPC82}, a subunit 
+  of RNA polymerase III, to \textit{SSA1} indicates that \textit{RPC82} 
+  as a bait pulled down \textit{SSA1}, but not vice versa. Another 
+  unreciprocated edge goes from the phosphatase \textit{PHO3} to
+  \textit{TEF2}.  An investigation of the dataset shows that \textit{PHO3}, 
+  which localizes in the periplasmatic space, was not reported in any 
+  interaction as a prey, while \textit{RPC82C} was. In the interpretation 
+  of the data, we would have most confidence that there is a real 
+  interaction between \textit{SSA1} and \textit{TEF2}. We can differentiate 
+  between the two unreciprocated interactions: the one between \textit{RPC82C} 
+  and \textit{SSA1} has been bi-directionally tested, but only found once, 
+  while the other one has only been uni-directionally tested and found.
+}
+\end{figure}
+
+To make the dialogue clear, we first define some terms that will be 
+used throughout this document:
+
+\begin{itemize}
+
+\item[] \textbf{Bait:} 
+  A protein sampled for the purposes of ascertaining the 
+  proteins with which it interacts. 
+  The set of baits used in an experiment is the bait population. 
+\item[] \textbf{Cloned Bait:} 
+  A bait that was successfully cloned in a yeast cell with either
+  a binding domain (Y2H) or a specified tag (AP-MS). 
+\item[] \textbf{Viable Bait:} 
+  A cloned bait that was observed to detect one or more proteins (prey). 
+\item[] \textbf{Prey:} 
+  A protein that is tested against the bait proteins. The set of prey used 
+  in an experiment is the prey population. 
+\item[] \textbf{Cloned Prey:} 
+  For Y2H, any prey that was successfully cloned
+  in a yeast cell with an activation domain. 
+\item[] \textbf{Viable Prey:} 
+  A prey that was found to interact with a viable bait. 
+  Sometimes referred to as a \textit{hit}.
+\item[] \textbf{Viable bait-prey:} 
+  A protein that is both a viable bait and a 
+  viable prey.
+\end{itemize}
+
+
+The vector \Robject{bpExperimentNames} contains the names to each 
+of the digraph objects. In addition, two list objects (called
+\Robject{viableBaits} and \Robject{viablePrey}) contain the viable
+baits and viable prey for each experimental dataset respectively.
+To represent all the data uniformly, the identifier for 
+each protein is given by its corresponding Gene Locus Name. 
+If the Gene Locus Name is unavailable, either the protein common name 
+or another identifier (IntAct accession code, UniProt ID, etc) 
+is used. We give some example code to show how to access this
+data.
+
+<<ppiData, echo=TRUE>>=
+data("bpExperimentNames")
+bpExperimentNames
+gavin02 <- get(bpExperimentNames[8])
+gavin02
+gavin02@nodes[1:4]
+@ 
+
+In addition to \Rpackage{ppiData}, another R-data package, 
+\Rpackage{yeastExpData}, and the R package \Rpackage{ppiStats}
+were generated. \Rpackage{yeastExpData} contains R objects that
+contains published data on protein abundance. Yeast GFP fusion data, and 
+a R dataframe consisting of 33 other yeast protein properties
+obtained from SGD (the dataframe is called \Robject{proteinProperties}). 
+The \Rpackage{ppiStats} package contains all the statistical methods 
+we have developed for the analysis of the directed protein interaction 
+data.
+
+<<ppiData, echo=FALSE, results=hide>>=
+library("yeastExpData")
+data(proteinProperties)
+@ 
+
+\section{Sampling and Coverage of the Interactome}
+\subsection{Analysis on the Bait/Prey Interactions}
+We addressed the issue of coverage initially by the viable bait 
+and viable prey population observed in the experimental datasets.
+From the directed graphs, we created the two lists 
+\Robject{viableBaits} and \Robject{viablePrey} by asking if
+each protein as a vertex had non-zero out- and in-degree 
+respectively modulo self-loops (i.e homomers). From these
+two lists, we were able to find the set theoretic intersections
+of the viable baits (VB) and viable prey (VP) per experiment to 
+ascertain the viable bait/prey (VBP) populations. 
+
+<<vbp>>=
+getVBP <- function(){
+vbp <- list()
+for(g in bpExperimentNames) {
+    m = as(get(g), "matrix")
+    ## delete self-edges
+    diag(m) = 0
+    
+    
+    stopifnot(identical(rownames(m), colnames(m)))
+    vbpEach = rownames(m)[ (rowSums(m)>0) & (colSums(m)>0) ]
+    vbp[[g]] <- vbpEach
+  }
+return(vbp)
+}
+
+vbp <- getVBP()
+
+@  
+
+From SGD, we used 6466 as the number of known and characterized 
+yeast ORFs. This allowed us to build bar charts (cf Figure~\ref{fig:barcharts})
+to gauge the proportion of the yeast interactome tested by each 
+experimental dataset. 
+
+     \begin{figure}
+       \centering
+       \subfigure{\includegraphics[width=10cm]{fig1.pdf}}
+       \caption{
+         \label{fig:barcharts}{
+           This bar chart shows the proportion of proteins sampled either as a 
+           viable bait (VB), a viable prey (VP), or as both (VBP). With the 
+           exception of the Krogan et al.~\cite{Krogan2006}'s data, the other
+           eleven show large portions of the yeast genome which did not 
+           participate in any positive interactions. Without additional 
+           information, there is little we can do to elucidate whether these
+           proteins were tested but inactive for all tests, or whether these 
+           proteins were not tested.            
+         }
+       }
+     \end{figure}
+
+In addition to the bar chart, we were able to generate a number of 
+coverage statistics on the Y2H and APMS datasets on a per experiment
+setting (cf Table~\ref{ta:eda}), as well as between experiments
+of the same type, i.e. those which used the same system to test
+interactions (cf Table~\ref{ta:y2hComp} and Table~\ref{ta:apmsComp}). 
+
+<<fig1, fig=TRUE, width=6, height=4, prefix=FALSE, include=FALSE, echo=FALSE, results=hide>>=
+
+wh <- c(6, 7, 8, 11, 10, 12)
+tot <- 6466
+
+EDAsub <- 
+    with(EDA, 
+         data.frame(Expt = rownames(EDA),
+                    VB   = VB - VBP,
+                    VBP  = VBP,
+                    VP   = VP - VBP,
+                    unt  = tot - (VB + VP - VBP)))
+
+bcol <- c(brewer.pal(9, "Pastel1")[9], brewer.pal(12, "Paired")[1:3])[c(2, 3, 4, 1)]
+
+bc <- barchart(reorder(Expt, -unt) ~ VB + VBP + VP + unt, 
+             data = EDAsub, stack = TRUE,
+             auto.key = 
+             list(text = c("Viable Bait only", "Both Viable Prey and Bait", "Viable Prey only", "Absent"),
+                  columns = 1, adj = 1), 
+             xlab = "Number of proteins",
+             par.settings = list(superpose.polygon = list(border = "transparent", col = bcol )))
+
+plot(bc)
+@ 
+
+Before we conduct any other statistical tests on the protein interaction data,
+we list the definitions of some standard statistical terms in 
+Table~\ref{tab:errorterms}. Any of these terms used throughout this document 
+(as well as the article \emph{Coverage and Error Models in Protein Interaction
+Data by Directed Graph Analysis}) correspond to the given definitions.
+
+\begin{table}
+\begin{tabular}{p{0.30\textwidth}p{0.05\textwidth}p{0.55\textwidth}}
+\hline
+\multicolumn{3}{c}{\textbf{Error Statistics}} \\\hline\hline
+True Positives& TP & Number of cases in which a true interaction is 
+experimentally observed.\\
+True Negatives& TN & Number of cases in which two proteins do not
+interact, their interaction is tested, but not observed.\\
+False Positives& FP & Number of cases in which two proteins do not 
+interact, but an interaction is reported by the experiment.\\
+False Negatives& FN & Number of cases in which a true interaction is
+experimentally tested and not found.\\
+\raggedright{True Tested Interactions}& P & TP+FN\\
+\raggedright{True Tested Non-interactions} & N & TN+FP\\
+\raggedright{False Positive Rate}&$p_{\mbs{FP}}$& Probability 
+that a truely absent interaction is detected. It can be 
+estimated by FP / N.\\
+\raggedright{False Negative Rate}&$p_{\mbs{FN}}$& Probability 
+that a true interaction is not detected. It can be estimated  by
+FN / P.\\
+Sensitivity&& Probability that a true interaction is detected. 
+It can be estimated by TP / P.\\
+Specificity&& Probability that a truely absent interaction is not 
+detected, estimated by TN / N.\\
+\raggedright{False Discovery Rate}&FDR&Informally, the expected value
+of FP/(TP+FP)~\cite{Storey2002}.\\
+\raggedright{Positive Predictive Value}&PPV& Probability that 
+an observed interaction is indeed true. It can be estimated 
+by TP / (TP+FP).\\
+\raggedright{Negative Predictive Value}&NPV& Probability that 
+an observed non-interaction is truely absent. It can be estimated 
+by TN / (TN+FN).\\ \hline\\[-2mm]
+\end{tabular}
+\caption{\label{tab:errorterms}% 
+Standard definitions of various error
+terms \cite{MethodsObsEpi}. The probabilities are conditional on that 
+the interaction is tested.}.
+\end{table}
+
+
+\subsection{Hypergeometric Testing}
+We wanted to ascertain if the viably tested proteins showed
+signs of being affected by a coverage bias in the experimental assay. 
+To investigate, we used the conditional hypergeometric tests
+described by \cite{falcon2006} to test for over/under 
+representation in GO categories. Using the R software packages
+\Rpackage{Category} and \Rpackage{GOstats}, we were able
+to asses these questions. For our purposes, we used a p-value 
+cutoff at the $10^{-2}$ threshold. We were only interested in 
+GO categories which contained at least 50 unique annotations 
+as well. Both these parameters can be set by the user, and 
+those familiar with the R programming language are free
+to manipulate these parameters within the R scripts.
+
+The code written to conduct these hypergeometric tests has been 
+supplied with the main article as an additional file. It can 
+also be found in the Scripts directory of the 
+\Rpackage{ppiStats} package. The file \Robject{hgGO.R} is a 
+script file which computes the conditional hypergeometric 
+testing on the GO directed acyclic graph (DAG). The file
+\Robject{hgPfam.R} computes the hypergeometric testing on 
+Pfam domains. Running these scripts will generate several 
+\textit{.html} files which provide the results to the 
+hypergeometric analysis.
+
+We provide one example of the hypergeometric test in the following 
+code chunck:
+
+<<hgTest>>=
+
+#geneSet1 <- viableBaits[[length(viableBaits)]]
+#parameter1 <- ppiBuildParams4GO(geneSet = geneSet1, universe = yeastGenome,
+#                                direction = "over", ontology="CC", cond=
+#                                TRUE, pThresh=0.01, annot="YEAST.db")
+#hg1 <- ppiHGTest4GO(parameter1, filename = names(viableBaits)[1],
+#                    label = names(viableBaits)[1], 
+#                    typeGeneSet = "Viable Baits", cs = 50)
+#parameter1@testDirection <- "under"
+#hg2 <- ppiHGTest4GO(parameter1, filename = names(viableBaits)[1],
+#                    label = names(viableBaits)[1], 
+#                    typeGeneSet = "Viable Baits", cs = 50)
+#pvalues(hg1)[pvalues(hg1)<hg1@pvalueCutoff]
+#pvalues(hg2)[pvalues(hg2)<hg2@pvalueCutoff]
+
+@ 
+
+
+
+\section{Systematic Bias}
+%--------------------------------------------------
+\subsection{Probability model}
+%--------------------------------------------------
+For a protein $\rho$ from VBP, we want to construct a 
+probability model for the joint distribution of  
+$N_{R}$, the number of reciprocated edges,
+$N_{I}$, the number of unreciprocated in-edges, and
+$N_{O}$, the number of unreciprocated out-edges,
+given the true degree $\delta^*$ and the 
+parameters $\pfp$, $\pfn$ and $N$ is the number
+of interesting proteins.
+
+We will use the shortcut
+$N_{U} = N_{I} + N_{O}$ for
+the total number of unreciprocated edges, and
+$\Theta=\left(\delta^*, \pfp, \pfn, N \right)$ 
+for the parameters.
+
+We consider
+\begin{eqnarray}
+\lefteqn{P\left(
+  N_{R} = n_r,
+  N_{I}  = n_i,
+  N_{O} = n_o \,;\,  \Theta\right) } \nonumber\\
+& = &
+  P(N_{I}=n_i, N_{O}=n_u-n_i \,|\,
+    N_{U} = n_u, N_{R} = n_r \,;\Theta ) \nonumber\\
+&&\times  P(N_{U} = n_u, N_{R} = n_r\,;\, \Theta) \label{eq:prob}
+\end{eqnarray}
+The decomposition of $P$ in the right hand side will be useful.
+
+For convenience, we suppress the index $\rho$ in our notation, but please
+keep in mind that the parameter $\delta^*\equiv \delta_{\rho}^*$ depends on
+$\rho$, and that $N_{R}$, $N_{I}$, $N_{O}$
+and $N_{U}$ are random variables that depend on $\rho$.
+$N$ is an experiment-wide parameter, and we also consider 
+$\pfp$ and $\pfn$ to be experiment-wide; although some
+of what follows might also apply to a model where $\pfp$ and
+$\pfn$ depend on $\rho$, if there were data to estimate them.
+
+We will now make some modeling assumptions.  If we find that
+the data for a particular protein does not concur well with these
+assumptions, we will consider it subject to systematic error.
+
+%--------------------------------------------------
+\subsubsection{Symmetry}
+%--------------------------------------------------
+The first assumption is that of symmetry, that is, equality of
+the distributions of $N_{I}$ and $N_{O}$.
+\begin{equation}
+     N_{I} =_d N_{O}
+\end{equation}
+and in particular
+\begin{equation}\label{eq:symm}
+     \left(N_{I}  | N_{U}=n_u\right) 
+\sim \mbox{B}(n_u, \frac{1}{2}).
+\end{equation}
+This gives us the first term on the RHS of~\eqref{eq:prob}. 
+The remarkable thing is that it depends on $n_u$, but not on any of
+the parameters! Now for the second term:
+
+%--------------------------------------------------
+\subsubsection{Decomposition}
+%--------------------------------------------------
+We can decompose $N_{R}$ and
+$N_{U}$ into those counts that originate from
+real interactions (i.\,e.\ that are true) and those that originate
+from false positive measurements.
+\begin{eqnarray}
+N_{R}   &=& N_{R}^v    + N_{R}^f \\
+N_{U} &=& N_{U}^v  + N_{U}^f
+\end{eqnarray}
+
+The false positives are easy:
+\begin{eqnarray}
+N_{R}^f   &\sim& \mbox{B}(N-\delta^*-1, \, \pfp^2) \nonumber\\
+N_{U}^f &\sim& \mbox{B}(N-\delta^*-1, \, 2\pfp(1-\pfp)) 
+\label{eq:fps}
+\end{eqnarray}
+
+The ones that originate from a real interaction follow a multinomial
+distribution
+\begin{eqnarray}
+\lefteqn{P(N_{R}^v   = n_{r}^v, \,
+           N_{U}^v = n_{u}^v \, | \, \Theta)} \nonumber\\ 
+&=&    (1-p)^{2n_{r}^v} \cdot 
+\left(2p(1-p)\right)^{n_{u}^v} \cdot 
+           p^{2n_{\mbs{none}}^v} \cdot 
+  \frac{\delta^*!}{n_{r}^v! n_{u}^v! n_{\mbs{none}}^v!} \label{eq:multinomial}
+\end{eqnarray}
+where for notational convenience we used the abbreviations
+$n_{\mbs{none}}^v=\delta^* - n_{r}^v - n_{u}^v$ 
+and $p\equiv \pfn$.
+
+The density function of the second term on the RHS of~\eqref{eq:prob}
+can then be obtained by convolution of \eqref{eq:fps} and
+\eqref{eq:multinomial}. For each value of the parameters
+$\Theta\equiv(N, \delta^*, \pfp, \pfn)$, this is a 2D
+matrix with infinite numbers of rows and columns, corresponding to
+$n_{r}$ and $n_{u}$. Most of the probability mass, however, is 
+concentrated within a bounded range.  Furthermore,
+we will restrict our attention to values of $\delta^*$ between 0 and
+$\delta^*_{\mbs{max}}$, depending on the data set.  This is
+implemented in the function \Rfunction{nullDistDoublyTestedEdges} in
+the package \Rpackage{ppiStats}.
+
+
+
+<<bpMat, echo=FALSE, results=hide>>=
+makeBPMat <- function(){
+  test <- mapply(intersect, viableBaits, viablePrey)
+  bpMat = new.env(parent=globalenv(), hash=FALSE)
+  for(g in bpExperimentNames) {
+    m = as(get(g), "matrix")
+    ## delete self-edges
+    diag(m) = 0
+    
+
+    stopifnot(identical(rownames(m), colnames(m)))
+    vbp = rownames(m)[ (rowSums(m)>0) & (colSums(m)>0) ]
+    
+    
+    m = m[vbp, vbp]
+
+    if(nrow(m)>1) {
+      assign(g, m, envir=bpMat)
+    } else {
+      cat(sprintf("Omitting %s, there is nothing much to do.\n", g))
+    }
+  }
+  return(bpMat)
+}
+
+bpMat <- makeBPMat()
+@
+
+%----------------------------------------
+%\subsubsection*{Calculating degrees}
+%----------------------------------------
+%The following function is useful for the 
+%subsequent calculations. Given a matrix from \Robject{bpMat},
+%it calculates
+%\begin{description}
+%\item[\Robject{nr}] the number of reciprocated edges,
+%\item[\Robject{no}] the number of unreciprocated out-edges, 
+%\item[\Robject{ni}] the number of unreciprocated in-edges.
+%\end{description}
+%
+<<calcDegrees, echo=FALSE, results=hide>>= 
+
+## testCase <- rbind(c(0,0,0,0), c(1,0,1,1), c(0,1,0,1), c(0,0,1,0))
+## dimnames(testCase) <- list(letters[1:4],letters[1:4])
+
+getDegrees = function(m) { 
+  stopifnot(all(m %in% 0:1))
+  m = m>0
+  cbind(nr=rowSums(m&t(m)), no=rowSums(m&(!t(m))), ni=rowSums((!m)&t(m)))
+}
+@ 
+
+%----------------------------------------
+\subsubsection{Using in/out asymmetry to identify baits that are likely
+  to be subject to systematic errors}\label{sec:inout}
+%----------------------------------------
+We now use Equation~\eqref{eq:symm} to assign a $p$-value
+to each protein. For a protein with unreciprocated degrees 
+$(n_{i}, n_{o})$, the $p$-value is
+%
+\begin{eqnarray}
+p(n_{i}, n_{o}) &=& 
+P(\mbox{min}\{ N_{I}, N_{O} \} \le  \mbox{min}\{ n_{i}, n_{o} \} ) \nonumber\\
+&=& \max 
+\{ 2P(N_{I} \le  \mbox{min}\{n_{i}, n_{o}\}), \, 1 \}
+\label{symmpvalue}
+\end{eqnarray}
+%
+
+This is computed by the following function \Rfunction{assessSymmetry} which
+is also contained in the R package \Rpackage{ppiStats}. In addition,
+the function also calculates the contours of the function 
+$p$ in the $(n_{i}, n_{o})$-plane. These will be used in the plots.
+
+<<scpFun, echo=FALSE, results=hide>>=
+pLevels = 1e-4
+stopifnot(length(pLevels)==1)## this particular pvalColor function assumes that
+##pvalColors = function(x) brewer.pal(3, "Paired")[1+(x<pLevels)]
+pvalColors = function(x) brewer.pal(3, "Paired")[2]  
+##  pvalColors = colorRampPalette(c("orange", "darkblue"))(length(pLevels)+2)[cut(x, c(0, pLevels, 1), include.lowest=TRUE)]
+
+scpFun = function(f, what) {
+  switch(what,
+         identity = {
+           trsf = function(x) x
+           xlab = expression(n['out'])
+           ylab = expression(n['in'])
+         },
+         sqrt = {
+           trsf = function(x) sign(x)*sqrt(abs(x))
+           xlab = expression(sqrt(n['out']))
+           ylab = expression(sqrt(n['in']))
+         })
+
+  plx   = trsf(jitter(f$deg[, c('no', 'ni')]))
+  axlim = c(0, max(plx))
+  par(mai=c(0.9, 0.95, 0.01, 0.005), cex.lab = 2.5)
+  plot(plx, xlim=axlim, ylim=axlim,
+       xlab=xlab, ylab=ylab, pch=20, main="",
+       col=pvalColors(f$p))
+
+##  for(k in 1:ncol(f$contours)) {
+ ##   px = f$contours[,k]
+  ##  py = (0:(length(px)-1)) - px
+   ## lines(trsf(px), trsf(py), col="#808080")
+    ##lines(trsf(py), trsf(px), col="#808080")
+  ##}
+}
+@ 
+
+%
+Now we are ready to apply the symmetry $p$-values, and we will create
+an environment, \Robject{bpRed} containing the reduced set of data 
+with only proteins with $p$-values larger than or equal to p-value 
+threshold of $10^{-2}$.
+%
+
+<<pThresh, echo=FALSE, results=hide>>=
+pThresh = 0.01
+bpRed = new.env(parent=globalenv(), hash=FALSE)
+
+out = file("unrecipInOutDistribIncludes.tex", open="wt")
+
+for(name in ls(bpMat)) {
+  f = assessSymmetry(bpMat[[name]], pLevels=pLevels)
+  sel = (f$p>=pThresh)
+  assign(name, bpMat[[name]][sel, sel], envir=bpRed)
+
+  myPDF = function(x, ch, ...) {
+    fn = sprintf("scp-%s-%s.pdf", name, ch)
+    pdf(file=fn, ...)
+    x
+    dev.off()
+    return(fn)
+  }
+  myEPS = function(x, ch, ...) {
+    fn = sprintf("scp-%s-%s.eps", name, ch)
+    postscript(file=fn, horizontal = FALSE, onefile = FALSE, paper = "special", ...)
+    x
+    dev.off()
+    return(fn)
+  }
+
+  f1=myPDF(scpFun(f, "identity"), ch="ident", width=4, height=4)
+  f2=myPDF(scpFun(f, "sqrt"), ch="sqrt", width=4, height=4)
+  f2e=myEPS(scpFun(f, "sqrt"), ch="sqrt", width=4, height=4)
+  f3=myPDF(hist(f$p, main=name, xlab='p', col="#e6f598", breaks=seq(0, 1, by=0.01)), 
+    ch="hist", width=6, height=2.1)
+
+  cat("\\begin{figure}[tp]\\begin{center}\n", file=out)
+  cat(sprintf("\\includegraphics[width=0.5\\textwidth]{%s}\n", f1), file=out)
+  cat(sprintf("\\includegraphics[width=0.5\\textwidth]{%s}\\\n", f2), file=out)
+  cat(sprintf("\\includegraphics[width=0.8\\textwidth]{%s}\n", f3), file=out)
+  cat(sprintf("\\caption{Scatterplots of in- and out-degree and symmetry $p$-values for %s}\n", name), file=out)
+  cat("\\end{center}\\end{figure}\n", file=out)
+}
+
+close(out)
+@ 
+
+For a more illuminating visual effect, we have perturbed the data on each
+point of the figures. This perturbation shows the relative concentration 
+of data for each point in each of the figures. 
+
+
+\include{unrecipInOutDistribIncludes}
+
+\subsection{Logistic Regressions}
+
+For a protein with $n_{i}$ unreciprocated in-edges and $n_{o}$
+unreciprocated out-edges, we expect
+\[
+n_{i} ~|~ n_{u} ~~~ \sim \mathcal{B}\left( n_{u}, 
+  \frac{1}{2} \right)
+\]
+if false positive and false negative errors are independent of a
+protein's properties.  Let $p$ be the true probability ($H_0: p =
+\frac{1}{2}$) for any particular protein.  We will
+\begin{itemize}
+\item Perform binomial tests for $H_1: p < \frac{1}{2}$ and $H_1: p > 
+  \frac{1}{2}$ for
+  each protein (in each experiment)
+\item Use test outcomes as responses to fit logistic regressions with
+  abundance and CAI as predictor \footnote{We actually use logarithm (base 2)
+    of abundance and CAI as predictor since that has a much more symmetric
+    distribution.}.
+\end{itemize}
+Regression is restricted to the subgraph of proteins that are VBP.
+
+<<setupLogReg,results=hide,echo=FALSE,results=hide>>=
+#data(gfp)
+#data(proteinProperties)
+#data(fcabundance)
+@ 
+
+<<init,results=hide,echo=FALSE,cache=FALSE>>=
+
+
+## The ultimate goal here is to do enough to see if unrecipInDegree is
+## significantly larger (smaller) than unrecipOutDegree for each
+## protein, and see if that dependence is related to abundance.  As the
+## first step, we'll just create a data frame with enough information
+## to proceed.
+
+
+
+### some EDA (may need extra code)
+
+## fm <- 
+##     glm(resp ~ abundance, 
+##         allExptInfo$Krogan2006BPGraph, 
+##         family = binomial())
+
+## summary(fm)$coef
+## summary(update(fm, subset = (abundance > 7)))$coef
+## summary(update(fm, subset = (abundance > 9)))$coef
+## summary(update(fm, subset = (abundance > 11)))$coef
+## summary(update(fm, subset = (abundance > 13)))$coef
+
+
+## xyplot(as.numeric(in.large.pval < 0.05) ~ logCAI + abundance, 
+##        allExptInfo$Krogan2006BPGraph, 
+##        outer = TRUE, 
+##        scales = list(x = "free"), 
+##        type = c("p", "smooth"), 
+##        col.line = "red", 
+##        ## subset = unrecipInDegree > 0 & unrecipOutDegree > 0, 
+##        span = 0.3, family = "gaussian")
+
+
+
+
+degInfo <-
+    function(gname, justViable = TRUE)
+{
+    message("processing ", gname)
+    gobj <- get(gname)
+    if (justViable)
+        gobj <- 
+            subGraph(snodes = intersect(viableBaits[[gname]], viablePrey[[gname]]),
+                     graph = gobj)
+    degStat <- calcInOutDegStats(gobj)
+    ans <- ## would prefer better rownames designation
+        with(degStat,
+             data.frame(inDegree = inDegree,
+                        outDegree = outDegree,
+                        unrecipInDegree = unrecipInDegree,
+                        unrecipOutDegree = unrecipOutDegree))
+    ans$log.abundance <- log2(gfp[rownames(ans), "abundance"])
+    ans$log.cai <- log2(proteinProperties[rownames(ans), "cai"])
+    ans$log.yepd <- log2(fcabundance[rownames(ans), "YEPD.mean"])
+    ans$log.sd <- log2(fcabundance[rownames(ans), "SD.mean"])
+    ans
+}
+
+
+## the second step is to perform the binomial tests
+
+binomTests <-
+    function(ginfo)
+{
+    ginfo$size <- with(ginfo, unrecipInDegree + unrecipOutDegree)
+    ## test if unrecipOutDegree is unusually small (i.e. indegree large)
+    ginfo$in.large.pval <- 
+        with(ginfo,
+             pbinom(unrecipOutDegree, size, 0.5, lower = TRUE))
+    ## test if unrecipInDegree is unusually small (i.e. outdegree large)
+    ginfo$out.large.pval <- 
+        with(ginfo,
+             pbinom(unrecipInDegree, size, 0.5, lower = TRUE))
+    ginfo
+}
+
+
+
+logisticTests <- 
+    function(ginfo, pval.cutoff = 0.05, 
+             which.test = c("large.indegree", "small.indegree"), 
+             family = binomial(), 
+             formula = resp ~ abundance, 
+             ...)
+{ 
+    which.test <- match.arg(which.test) 
+    ginfo$resp <- 
+        as.numeric(switch(which.test,
+                          large.indegree = ginfo$in.large.pval, 
+                          small.indegree = ginfo$out.large.pval) < pval.cutoff)
+    glm(formula, ginfo, family = family, control = glm.control(maxit = 150) ,...)  
+}
+
+
+
+##
+@ 
+
+
+\newpage
+
+\subsection{Results: log(abundance) as predictor}
+
+<<calc,echo=FALSE,results=hide,cache=FALSE>>=
+
+#exptsToTry <- bpExperimentNames[bpExperimentNames != "Zhao2005BPGraph"]
+
+#allExptInfo <- lapply(exptsToTry, degInfo)
+#names(allExptInfo) <- exptsToTry
+
+#allExptInfo <- lapply(allExptInfo, binomTests)
+
+
+##
+@ 
+
+
+<<showAbundance,cache=FALSE,echo=FALSE>>=
+
+#logistic.inlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.abundance,
+#           which.test = "large")
+
+#logistic.outlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.abundance,
+#           which.test = "small")
+
+#cat("Systematic := unusually large in-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.inlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+#cat("Systematic := unusually large out-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.outlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+##
+@ 
+
+\newpage
+
+\subsection{Results: log(YEPD-abundance) as predictor}
+
+
+<<showYEPDAbundance,cache=FALSE,echo=FALSE>>=
+
+#logistic.inlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.yepd,
+#           which.test = "large")
+
+#logistic.outlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.yepd,
+#           which.test = "small")
+
+#cat("Systematic := unusually large in-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.inlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+#cat("Systematic := unusually large out-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.outlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+
+##
+@ 
+
+\newpage
+
+\subsection{Results: log(SD-abundance) as predictor}
+
+
+<<showYEPDAbundance,cache=FALSE,echo=FALSE>>=
+
+#logistic.inlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.sd,
+#           which.test = "large")
+
+#logistic.outlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.sd,
+#           which.test = "small")
+
+#cat("Systematic := unusually large in-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.inlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+#cat("Systematic := unusually large out-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.outlarge,
+#               function(x) round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7)))
+
+##
+@ 
+
+\newpage
+
+\subsection{Results: log(CAI) as predictor}
+
+
+
+<<showLogCAI,cache=FALSE,echo=FALSE>>=
+
+#logistic.inlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.cai,
+#           which.test = "large")
+
+#logistic.outlarge <-
+#    lapply(allExptInfo, logisticTests,
+#           pval.cutoff = 0.05,
+#           formula = resp ~ log.cai,
+#           which.test = "small")
+
+#cat("Systematic := unusually large in-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.inlarge,
+#               function(x) try(round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7))))
+
+#cat("Systematic := unusually large out-degree", fill = TRUE)
+#do.call(rbind, 
+#        lapply(logistic.outlarge,
+#               function(x) try(round(summary(x)$coef[2, c(1, 2, 4), drop = TRUE], 7))))
+
+##
+@ 
+
+
+In addition to the Logistic Regressions, we plotted the adjacency matrix 
+diagram of the bait/prey interactions in two different ways: 1. the rows 
+and columns randomly ordered and 2. the rows and columns ordered by ascending 
+CAI (cf Figure~\ref{fig:caiplots} and Figure~\ref{fig:caiplots1}). This 
+readily gives a visual method of identifying the association between CAI and 
+proteins rejecting the 2-sided Binomial test.
+
+<<GavinMat, include=FALSE, echo=FALSE, results=hide>>=
+
+#experiment <- "Gavin2006BPGraph"
+#experiment1 <- "Krogan2006BPGraph"
+
+#keep <- vbp[[experiment]] ## VBP only
+#keep1 <- vbp[[experiment1]] ## VBP only
+### The following is interesting, in the sense that it gives 
+### different-looking things in Krogan2006 and Gavin2006 
+
+## keep <- viablePrey[[experiment]] 
+
+#smat <- as(get(experiment), "sparseMatrix")[keep, keep]
+
+#ord.CAI <- order(proteinProperties[rownames(smat), "cai"])
+#ord.random <- sample(seq_len(nrow(smat)))
+
+
+#mat.random <- 
+
+#    image((smat - smat * t(smat))[ord.random, ord.random],
+#          aspect = "iso",
+#          xlab = "Prey",
+#          ylab = "Bait",
+#          main = "a. Random Order", 
+#          colorkey = FALSE, sub = "Gavin 2006")
+          
+#mat.CAI <- 
+
+#    image((smat - smat * t(smat))[ord.CAI, ord.CAI],
+#          aspect = "iso",
+#          xlab = "Prey",
+#          ylab = "Bait",
+#          main = "b. Ordered By Ascending CAI", 
+#          colorkey = FALSE, sub="Gavin 2006")
+
+
+#smat1 <- as(get(experiment1), "sparseMatrix")[keep1, keep1]
+
+#ord.CAI1 <- order(proteinProperties[rownames(smat1), "cai"])
+#ord.random1 <- sample(seq_len(nrow(smat1)))
+
+
+#mat.random1 <- 
+
+#    image((smat1 - smat1 * t(smat1))[ord.random1, ord.random1],
+#          aspect = "iso",
+#          xlab = "Prey",
+#          ylab = "Bait",
+#          main = "a. Random Order", 
+#          colorkey = FALSE, sub = "Krogan 2006")
+          
+#mat.CAI1 <- 
+
+#    image((smat1 - smat1 * t(smat1))[ord.CAI1, ord.CAI1],
+#          aspect = "iso",
+#          xlab = "Prey",
+#          ylab = "Bait",
+#          main = "b. Ordered By Ascending CAI", 
+#          colorkey = FALSE, sub="Krogan 2006")
+
+##
+@ 
+
+
+%\begin{figure}
+%  \centering
+
+<<GavinImages, fig=TRUE, width=10, height=7, echo=FALSE>>=
+#par(mfrow = c(2,2))
+#plot(mat.random, split = c(1, 1, 2, 1), more = TRUE)
+#plot(mat.CAI, split = c(2, 1, 2, 1), more = FALSE)
+@ 
+
+%       \caption{
+%         \label{fig:caiplots}{
+%           These plots present a view of the adjacency matrix for the VBP
+%           derived from the Gavin et al's.~\cite{Gavin2006} experimental data set.
+%           An interaction between bait $b$ and prey $p$ is recorded by a dark 
+%           pixel in $(b,p)^{th}$ position of the matrix. The left panel has the
+%           rows and columns randomly ordered while the
+%           right panel has the rows and columns ordered by ascending
+%           values of each protein's condon adaptation index (CAI).
+%           Contrasting these two figures, we can ascertain that there is 
+%           a relationship between bait/prey interactions and CAI. 
+%           The relationship is based on proteins with 
+%           large un-reciprocated in-degree since the right panel shows a dark 
+%           vertical band. Had unreciprocated out-degree also been associated 
+%           with CAI then there would be a similar horizontal band reflected
+%           across the main diagonal of the matrix.
+%           }
+%       }
+%     \end{figure}
+
+%\begin{figure}
+%\centering
+<<KroganImages, fig=TRUE, width=10, height=7, echo=FALSE>>=
+#plot(mat.random1, split = c(1, 1, 2, 1), more = TRUE)
+#plot(mat.CAI1, split = c(2, 1, 2, 1), more = FALSE)
+@ 
+
+%\caption{
+%         \label{fig:caiplots1}{
+%           Same adjacency matrix plots for the Krogan et al's~\cite{Krogan2006}
+%           data.
+%           }
+%       }
+%     \end{figure}
+
+There has been a number of research articles that point to the relationship
+between CAI and protein abundance. To verify this fact, we computed both the
+Pearson and Spearman correlation coefficients between CAI and three sets
+of abundance data: 1. a general measure of abundance in the yeast cell, 2.
+the mean measure of abundance of a yeast cell in YEPD medium, and 3. the 
+mean measure of abundance of a yeast cell in a SD medium (Table~\ref{ta:cor}). 
+The Spearman correlation seems to be the more accurate measure, not simply
+ because it is larger, but because the relationship between CAI and 
+abundance is not linear \cite{Sharp1987} 
+(cf Figures~\ref{fig-plotCorGav} and ~\ref{fig-plotCorKro}). 
+
+<<cor, results=hide, echo=FALSE>>=
+data(gfp)
+data(fcabundance)
+
+pN1 <- intersect(rownames(proteinProperties), rownames(gfp))
+c1 <- cor(proteinProperties[pN1,"cai"], (gfp[pN1, "abundance"]),
+    use="pairwise.complete.obs")
+c1S <- cor(proteinProperties[pN1,"cai"], (gfp[pN1, "abundance"]),
+    use="pairwise.complete.obs", method="spearman")
+
+pN2 <- intersect(rownames(proteinProperties), rownames(fcabundance))
+c2 <- cor(proteinProperties[pN2,"cai"], (fcabundance[pN2, "YEPD.mean"]),
+    use="pairwise.complete.obs")
+c2S <- cor(proteinProperties[pN2,"cai"], (fcabundance[pN2, "YEPD.mean"]),
+    use="pairwise.complete.obs", method="spearman")
+
+c3 <- cor(proteinProperties[pN2,"cai"], (fcabundance[pN2, "SD.mean"]),
+    use="pairwise.complete.obs")
+
+c3S <- cor(proteinProperties[pN2,"cai"], (fcabundance[pN2, "SD.mean"]),
+    use="pairwise.complete.obs", method="spearman")
+
+cm <- matrix(0, 2,3)
+cm[1,] <- round(c(c1,c2,c3), digit=2)
+cm[2,] <- round(c(c1S,c2S,c3S), digit=2)
+
+rownames(cm) <- c("Pearson", "Spearman")
+colnames(cm) <- c("General Abundance","YEPD","SD")
+@ 
+
+<<corTab, results=tex, echo=FALSE>>=
+xtable(cm, display=c("s","fg","fg","fg"), label="ta:cor", 
+       tabular.environment="longtable", floating=FALSE, size="small",
+       caption = "This table gives both the Pearson and Spearman
+       correlation between CAI against three distinct protein
+       abundance datasets: 1. General Abundance, 2. Abundance in 
+       the YEPD medium, 3. Abundance in the SD medium. An interesting 
+       observation is that the highest correlation found is between CAI 
+       and protein abundance in the SD medium.")
+@ 
+
+We plotted the values of each protein's CAI value against $(\log)$ the three 
+sets of measured abundance data to visualize this association 
+(cf Figures~\ref{fig-plotCorGav, fig-plotCorKro}). Those proteins which
+are likely affected by a systematic bias in the Gavin et al's~\cite{Gavin2006}
+data are colored red in Figure~\ref{fig-plotCorGav}; proteins affected in 
+Krogan et al's~\cite{Krogan2006} are colored red in Figure~\ref{fig-plotCorGav}.
+The most interesting fact is that the measured protein abundances in SD medium 
+have the highest correlation with CAI. This seems to suggest that the reference 
+set of genes used to compute all CAI might be highly expressed under SD medium.
+In addition, the relationship between the systematic bias with CAI and 
+protein abundance becomes much more apparent (more so with \cite{Krogan2006}).
+
+<<plotCorGav, echo=False, results=hide, fig=TRUE, include=FALSE, width=10, height=15>>=
+par(mfrow=c(3,1), lwd=2, cex.lab=2, cex.axis=1.5)
+plot(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
+     xlab="CAI value", ylab="Log Protein Abundance", 
+     main=paste("Spearman Correlation Coefficient = ", round(c1S,digit=2), sep=""),
+     col=ifelse(pN1 %in% setdiff(vbp[["Gavin2006BPGraph"]] ,
+       rownames(mget("Gavin2006BPGraph", bpRed)[[1]])), "red", "blue"))
+##abline(coef(0,c1S), col="white")
+plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
+     xlab = "CAI value", ylab="Log Protein Abundance in YEPD", 
+     main=paste("Spearman Correlation Coefficient = ", round(c2S,digit=2), sep=""),
+     col=ifelse(pN2 %in% setdiff(vbp[["Gavin2006BPGraph"]] ,
+       rownames(mget("Gavin2006BPGraph", bpRed)[[1]])), "red", "blue"))
+##abline(coef(0,c2S), col="white")
+plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
+     xlab="CAI value", ylab="Log Protein Abundance in SD", 
+     main=paste("Spearman Correlation Coefficient = ", round(c3S,digit=2), sep=""),
+     col=ifelse(pN2 %in% setdiff(vbp[["Gavin2006BPGraph"]] ,
+       rownames(mget("Gavin2006BPGraph", bpRed)[[1]])), "red", "blue"))
+##abline(coef(0,c3S), col="white")
+@
+
+\myincfig{fig-plotCorGav}{\textwidth}{Plots of CAI against $\log$ of the three measured 
+abundance datasets. We colored those proteins found to be affected by a systematic bias
+in the Gavin et al.'s \cite{Gavin2006} data red and all other proteins blue.} 
+
+<<plotCorKro, echo=False, results=hide, fig=TRUE, include=FALSE, width=10, height=15>>=
+par(mfrow=c(3,1), lwd=2, cex.lab=2, cex.axis=1.5)
+plot(proteinProperties[pN1,"cai"], log(gfp[pN1, "abundance"]),
+     xlab="CAI value", ylab="Log Protein Abundance", 
+     main=paste("Spearman Correlation Coefficient = ", round(c1S,digit=2), sep=""),
+     col=ifelse(pN1 %in% setdiff(vbp[["Krogan2006BPGraph"]] ,
+       rownames(mget("Krogan2006BPGraph", bpRed)[[1]])), "red", "blue"))
+##abline(coef(0,c1S), col="white")
+plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "YEPD.mean"]),
+     xlab = "CAI value", ylab="Log Protein Abundance in YEPD", 
+     main=paste("Spearman Correlation Coefficient = ", round(c2S,digit=2), sep=""),
+     col=ifelse(pN2 %in% setdiff(vbp[["Krogan2006BPGraph"]] ,
+       rownames(mget("Krogan2006BPGraph", bpRed)[[1]])), "red", "blue"))
+##abline(coef(0,c2S), col="white")
+plot(proteinProperties[pN2,"cai"], log(fcabundance[pN2, "SD.mean"]),
+     xlab="CAI value", ylab="Log Protein Abundance in SD", 
+     main=paste("Spearman Correlation Coefficient = ", round(c3S,digit=2), sep=""),
+     col=ifelse(pN2 %in% setdiff(vbp[["Krogan2006BPGraph"]] ,
+       rownames(mget("Krogan2006BPGraph", bpRed)[[1]])), "red", "blue"))
+##abline(coef(0,c3S), col="white")
+@
+
+\myincfig{fig-plotCorKro}{\textwidth}{Plots of CAI against $\log$ of the three measured 
+abundance datasets. We colored those proteins found to be affected by a systematic bias
+in the Krogan et al.'s \cite{Krogan2006} data red and all other proteins blue.} 
+
+\subsection{Fisher's Exact Test Across Experiment}
+
+Next we wanted to ascertain if the protein subset ($S_1$) that was affected by 
+a systematic bias in one experiment is related to the protein subset ($S_2$) 
+affected by a systematic bias of another experiment. There are two ways to 
+generate the subsets $S_1$ and $S_2$. The first methods generates these 
+sets in an independent manner; the Binomial model is applied to each 
+experimental dataset generating a subset $S_i$ per experiment $i$. Then these
+subsets can be compared by restricting to the set of common $VBP$ of the 
+two experiments. The second method generates $S_1$ and $S_2$ by first restricting
+to the common $VBP$ (denoted by $X$) of experiment 1 and experiment 2. Then the 
+subset $S_1$ is generated by applying the Binomial model to the dataset of Experiment 1 
+restricted only to $X$, or to use graph theoretic terms, using the node induced subgraph 
+generated by $X$. $S_2$ is generated in the same manner with the dataset of experiment 2.
+We compare the protein subsets $S_1$ and $S_2$ using both methods.
+
+To investigate this
+relationship, we created three $2 \times 2$ tables. Only two datasets 
+\cite{Gavin2006, Krogan2006} contained sufficient data points for this 
+analysis. The $2 \times 2$ tables were created where the overall 
+universe is restricted to $X$ =  VBP$_{\cite{Gavin2006}} \mbox{ } \cap$ 
+VBP$_{\cite{Krogan2006}}$. \cite{Gavin2006} index the rows; \cite{Krogan2006}, 
+the columns. In the $(2,2)$-entry of each table, we count the number of common 
+proteins affected by a bias in both experiments (${|S_1 \cap S_2|}$); in 
+$(1,2)$-entry, we count the number affected in \cite{Gavin2006} only 
+(${|S_1 \setminus S_2|}$); in $(2,1)$, the number in \cite{Krogan2006} only
+(${|S_2 \setminus S_1|}$); and in $(1,1)$, the number not 
+affected in both $({|S_1^c \cap S_2^c|})$. We can create three separate 
+$2 \times 2$ tables based on which Binomial test we use:
+
+\begin{itemize}
+  \item Number of proteins identified by the two-sided Binomial test.
+  \item Number of proteins identified by the one-sided Binomial test where
+    in-degree is much larger than out-degree.
+  \item Number of proteins identified by the one-sided Binomial test where
+    out-degree is much larger than in-degree.
+\end{itemize}
+
+<<twoBytwo, echo=FALSE, results=hide>>=
+vbpGraph <- mapply(function(x,y){subGraph(x, get(y))},vbp,bpExperimentNames)
+
+
+vbpStochastic <- lapply(vbpGraph, function(x) {if(length(nodes(x))!=0) 
+                                                 idStochastic(x, bpGraph=TRUE)})
+vbpSystematic <- mapply(function(x,y){setdiff(nodes(x),y)},
+                        vbpGraph,vbpStochastic)
+
+proportion <- mapply(function(x,y) length(x)/length(y),vbpSystematic,vbp)
+
+exp1 <- vbp[["Gavin2006BPGraph"]]
+exp2 <- vbp[["Krogan2006BPGraph"]]
+x <- intersect(exp1, exp2)
+y <- matrix(0, nrow=length(x), ncol=2)
+rownames(y) <- x
+colnames(y) <- c("Gavin06","Krogan06")
+y1 <- y
+y2 <- y
+
+dG <- calcInOutDegStats(vbpGraph[["Gavin2006BPGraph"]])
+dK <- calcInOutDegStats(vbpGraph[["Krogan2006BPGraph"]])
+
+gavLargeSysIn <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[["Gavin2006BPGraph"]]] > 0))
+gavLargeSysOut <- names(which((dG$inDegreeMinusOutDegree)[vbpSystematic[["Gavin2006BPGraph"]]] < 0))
+
+kroLargeSysIn <- names(which((dK$inDegreeMinusOutDegree)[vbpSystematic[["Krogan2006BPGraph"]]] > 0))
+kroLargeSysOut <- names(which((dK$inDegreeMinusOutDegree)[vbpSystematic[["Krogan2006BPGraph"]]] < 0))
+
+indexG <- x %in% vbpSystematic[["Gavin2006BPGraph"]]
+indexK <- x %in% vbpSystematic[["Krogan2006BPGraph"]]
+indexG1 <- x %in% gavLargeSysIn
+indexK1 <- x %in% kroLargeSysIn
+indexG2 <- x %in% gavLargeSysOut
+indexK2 <- x %in% kroLargeSysOut
+
+y[indexG, 1] <- 1
+y[indexK, 2] <- 1
+z <- data.frame(y)
+
+y1[indexG1, 1] <- 1
+y1[indexK1, 2] <- 1
+z1 <- data.frame(y1)
+
+y2[indexG2, 1] <- 1
+y2[indexK2, 2] <- 1
+z2 <- data.frame(y2)
+
+tab <- table(z$Gavin06, z$Krogan06)
+tab2Way <- tab
+ft <- fisher.test(tab)
+
+tab1 <- table(z1$Gavin06, z1$Krogan06)
+tab1WayIN <- tab1
+ft1 <- fisher.test(tab1)
+
+tab2 <- table(z2$Gavin06, z2$Krogan06)
+tab1WayOUT <- tab2
+ft2 <- fisher.test(tab2)
+
+@ 
+
+<<print2by2>>=
+tab2Way
+tab1WayIN
+tab1WayOUT
+@ 
+
+We can use these three tables as the parameters for Fisher's Exact 
+test (again a hypergeometric test), and see the results:
+
+<<printFishers>>=
+fisher.test(tab2Way)
+fisher.test(tab1WayIN)
+fisher.test(tab1WayOUT)
+@ 
+
+<<gkTest, echo=FALSE, results=hide>>=
+kSG <- subGraph(x, get("Krogan2006BPGraph"))
+gSG <- subGraph(x, get("Gavin2006BPGraph"))
+g1 <- idStochastic(gSG, bpGraph=TRUE)
+k1 <- idStochastic(kSG, bpGraph=TRUE)
+g2 <- setdiff(x, g1)
+k2 <- setdiff(x, k1)
+
+dsG <- calcInOutDegStats(gSG)
+dsK <- calcInOutDegStats(kSG)
+
+gLI <- names(which((dsG$inDegreeMinusOutDegree)[g2] > 0))
+gLO <- names(which((dsG$inDegreeMinusOutDegree)[g2] < 0))
+
+
+
+kLI <- names(which((dsK$inDegreeMinusOutDegree)[k2] > 0))
+kLO <- names(which((dsK$inDegreeMinusOutDegree)[k2] < 0))
+
+
+
+indG <- x %in% g2
+indK <- x %in% k2
+indG1 <- x %in% gLI
+indK1 <- x %in% kLI
+indG2 <- x %in% gLO
+indK2 <- x %in% kLO
+
+if (sum(indG1)+sum(indG2) != sum(indG)) {stop("1")}
+if (sum(indK1)+sum(indK2) != sum(indK)) {stop("2")}
+
+yy <- matrix(0, nrow=length(x), ncol=2)
+rownames(yy) <- x
+colnames(yy) <- c("Gavin06","Krogan06")
+yy1 <- yy
+yy2 <- yy
+
+yy[indG, 1] <- 1
+yy[indK, 2] <- 1
+zz <- data.frame(yy)
+
+yy1[indG1, 1] <- 1
+yy1[indK1, 2] <- 1
+zz1 <- data.frame(yy1)
+
+yy2[indG2, 1] <- 1
+yy2[indK2, 2] <- 1
+zz2 <- data.frame(yy2)
+
+ta2Way <- table(zz$Gavin06, zz$Krogan06)
+
+
+ta1WayIN <- table(zz1$Gavin06, zz1$Krogan06)
+
+ta1WayOUT <- table(zz2$Gavin06, zz2$Krogan06)
+@
+
+The previous table used each individual dataset's $VBP$ population to generate
+the sets $S_1$ and $S_2$. We then restricted to $X$ to calculate
+two way tables based on these protein subsets. In the following tables, we first 
+restrict to the node induced subgraph of $X$ for each experiment, and then 
+generate the sets $S_1$ and $S_2$. We then create two way tables 
+based on these protein subsets to determine the level of independence.
+
+<<newTables>>= 
+ta2Way
+ta1WayIN
+ta1WayOUT
+@ 
+
+<<newFishers>>=
+fisher.test(ta2Way)
+fisher.test(ta1WayIN)
+fisher.test(ta1WayOUT)
+@ 
+
+Because we are looking for reproducibility across experiments, 
+the two-way tables \Robject{tab2Way} and \Robject(ta2Way) as 
+well as the results from their 
+corresponding Fisher's exact test are not particularly relevant.
+Indeed, we should only focus on the one-sided Binomial tests 
+and see if we such artifacts are reproducible across experiments.
+For those proteins which in-degree dominates out-degree, i.e.
+proteins tested in \Robject{tab1WayIN} and \Robject{ta1WayIN}, we 
+see an exceptionally small p-value for the former and a reasonably
+significant p-value for the latter, and so we should probably
+reject the null hypothesis that these $S_1$ is independent of
+$S_2$. For those proteins which out-degree dominates in-degree, 
+\Robject{tab1WayOUT} and \Robject{ta1WayOUT}, we see a less 
+significant p-value in the former but an incredibly small 
+p-value in the latter, and so again we should reject independent
+null hypothesis. For the sake of completeness we present all the 
+two way tables and note that all the tests show relatively small 
+p-values as well as substantial odds ratios.
+
+\subsection{Unreciprocated Degree Statistics}
+Our Binomial model allows us to determine proteins that might be subject 
+to a systematic bias of the experiment where each statistical test is 
+conducted on a per protein level. In addition to these series of statistical 
+test, we can describe experiment-wide artifacts by using the same binomial model 
+for each protein. 
+
+For each protein $\rho$ with directed degree $(i_{\rho},o_{\rho})$ and 
+$n_{\rho} = i_{\rho}+o_{\rho}$, we can standardize the in-degree and 
+compute the corresponding \emph{z-score} for each protein:
+
+\begin{eqnarray}
+z_{\rho} &=& \frac{\frac{1}{2}\;n_{\rho} - o_{\rho}}
+{\sqrt{\left( \frac{1}{2} \right)^2\;n_{\rho}}}\\
+    &=& \frac{i_{\rho}-o_{\rho}}{\sqrt{i_{\rho}+o_{\rho}}}
+\end{eqnarray}
+
+After calculating the z-score for each protein within an experiment, we 
+were able to estimate the distributions within each dataset. Using the 
+R \Rfunction{hist} and \Rfunction{density} functions, we were able to 
+render the histograms for eleven of the datasets and the smooth density 
+distribution for the three largest datasets.
+
+<<zscore, echo=FALSE, results=hide>>=
+normFunc <- function(ni, no) (ni-no)/(sqrt(ni+no))
+if("Zhao2005BPGraph" %in% names(vbpGraph)){
+  rm <- which(names(vbpGraph) == "Zhao2005BPGraph")
+  vbpSG <- vbpGraph[-rm]
+}
+deg <- lapply(vbpSG, calcInOutDegStats)
+zScore <- lapply(deg, function(x) normFunc(x[["unrecipInDegree"]], x[["unrecipOutDegree"]]))
+zScore1 <- lapply(zScore, function(x) x[!is.na(x)])
+dNames <- sub("-$", "", sub("BPGraph", "-", bpExperimentNames))
+dNames1 = dNames[-5]
+m = round(sapply(zScore1, mean), digit=3)
+dens <- lapply(zScore1, density)
+@ 
+
+<<zScoreNew, echo=FALSE, results=hide>>=
+zG <- normFunc(dsG[["unrecipInDegree"]], dsG[["unrecipOutDegree"]])
+zK <- normFunc(dsK[["unrecipInDegree"]], dsK[["unrecipOutDegree"]])
+@ 
+
+<<zScoreHist, fig=TRUE, width=10, height=14, echo=FALSE, results=hide, include=FALSE>>=
+
+par(mfrow = c(3,4), cex.main = 2, cex.lab=1.5, cex.axis=1.5)
+mapply(function(x,y) {
+  hist(x, main=y, col="#e6f598")},
+  zScore1, dNames1)
+@ 
+
+\myincfig{fig-zScoreHist}{\textwidth}{Histograms of the out-degree z-scores.}
+
+Histograms are plotted to determine the standard out-degree 
+distributions (Figure~\ref{fig-zScoreHist}). We can see that for 
+datasets such as 
+\cite{Cagney2001, Tong2002, Hazbun2003}, there are relatively
+few data points which yield little statistical power. Overall,
+Only the \cite{Ito2001, Gavin2006, Krogan2006} plots showed
+distinct and approximately unimodal distributions.
+
+<<zScoreDens, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
+par(mfrow = c(4,1))
+for(i in c(1, 12, 10, 11)) {
+  z = zScore1[[i]]
+  xlim = c(-1,1)*max(abs(quantile(z, probs=c(0.01, 0.99))))
+  dens1 = density(z, adjust=2)
+  plot.density(dens1, main=paste("z-scores for ", dNames1[i], sep=""), 
+    col="darkblue", xlab="z", xlim=xlim, lwd=2)
+  abline(v=0,
+         col="#808080", 
+         lty=c(2,1,1), lwd=2)
+}
+@
+
+\myincfig{fig-zScoreDens}{\textwidth}{Density plots for the three largest
+bait/prey datasets with the zero-line.}
+
+Thesethree plots have either a strong positive or negative concentration of data 
+points in the distributions based on their densities (Figure~\ref{fig-zScoreDens}).
+We have discussed the possible reasons for these concentrations in the main 
+article. 
+
+<<zScoreInt, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
+
+smoothScatter(zScore1[["Gavin2006"]][x], zScore1[["Krogan2006"]][x], 
+              nrpoints=50, transformation=function(x) x^.15, 
+              ylab="z-score for Krogan 2006  Data", 
+              xlab="z-score for Gavin 2006 Data", 
+              main ="z-score Plot for Common VBP of Gavin2006 against Krogan2006")
+abline(h=0, v=0, col="red")
+abline(h=c(-2.58,2.58), v=c(-2.58,2.58), col="green")
+@
+
+<<newZ, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
+smoothScatter(zG, zK, 
+              nrpoints=50, transformation=function(x) x^.15, 
+              ylab="z-score for Krogan 2006  Data", 
+              xlab="z-score for Gavin 2006 Data", 
+              main ="z-score Plot for Common VBP of Gavin2006 against Krogan2006")
+abline(h=0, v=0, col="red")
+abline(h=c(-2.58,2.58), v=c(-2.58,2.58), col="green")
+@ 
+
+<<bothZ, fig=TRUE, width=9, height=9, prefix=TRUE, echo=FALSE, results=hide, include=FALSE>>=
+par(mfrow=c(1,2), pty="s", lwd = 2)
+smoothScatter(zScore1[["Gavin2006"]][x], zScore1[["Krogan2006"]][x], 
+              nrpoints=50, transformation=function(x) x^.15, 
+              ylab="z-score for Krogan 2006  Data", 
+              xlab="z-score for Gavin 2006 Data",
+              main = "a. z-score Calculated Independently")
+abline(h=0, v=0, col="red")
+abline(h=c(-2.58,2.58), v=c(-2.58, 2.58), col="green")
+smoothScatter(zG, zK, 
+              nrpoints=50, transformation=function(x) x^.15, 
+              ylab="z-score for Krogan 2006  Data", 
+              xlab="z-score for Gavin 2006 Data",
+              main = "b. z-score Calculated Uniformly")
+abline(h=0, v=0, col="red")
+abline(h=c(-2.58,2.58), v=c(-2.58,2.58), col="green")
+@ 
+
+In addition to the density plots, we wanted to compare z-scores across experimental
+datasets. Currently, there are only two datasets~\cite{Gavin2006, Krogan2006} for
+which this comparison is insightful. Again we can calculate the $z$-score for a 
+protein in two ways: either within the original $VBP$ population of each
+individual dataset or by first restricting to the common VBP population $X$ in 
+each dataset. We have computed the $z$-score in both manners. Once the $z$-scores 
+have been computed, we can plot the scores of \cite{Gavin2006} against 
+\cite{Krogan2006} restricted to protein set $X$
+(See Figure~\ref{fig-zScoreInt, fig-newZ}). From the plots, we were also able 
+to generate correlation coefficients between the $z$-scores \cite{Gavin2006} and the 
+$z$-scores from \cite{Krogan2006} restricted to $X$. 
+
+<<zScoreIntCor, echo=FALSE, results=hide>>=
+zCorP <- cor(zScore1[["Gavin2006"]][x], zScore1[["Krogan2006"]][x],
+             use = "pairwise.complete.obs", method="pearson")
+zCorK <- cor(zScore1[["Gavin2006"]][x], zScore1[["Krogan2006"]][x],
+             use = "pairwise.complete.obs", method="kendall")
+zCorS <- cor(zScore1[["Gavin2006"]][x], zScore1[["Krogan2006"]][x],
+             use = "pairwise.complete.obs", method="spearman")
+
+zNewP <- cor(zG,zK, use= "pairwise.complete.obs", method="pearson")
+zNewK <- cor(zG,zK, use = "pairwise.complete.obs", method="kendall")
+zNewS <- cor(zG,zK, use = "pairwise.complete.obs", method="spearman")
+
+zCorM <- matrix(0,2,3)
+zCorM[1,] <- c(zCorP,zCorK,zCorS)
+zCorM[2,] <- c(zNewP, zNewK, zNewS)
+rownames(zCorM) <- c("Calculations from the Original Data","Calculations Restricted to X")
+colnames(zCorM) <- c("Pearson","Kendall","Spearman")
+@ 
+
+<<zCorTab, results=tex, echo=FALSE>>=
+xtable(zCorM, display=c("s","fg","fg","fg"), label="ta:zCor", 
+       tabular.environment="longtable", floating=FALSE, size="small",
+       caption = "This table gives both the Pearson, Kendall, and Spearman
+       correlation between the z-scores from the data of Gavin et al. 
+       and the z-scores from the data of Krogan et al. (both 2006).
+       The correlation is computed with the restriction to those VBP
+       in both datasets.")
+@ 
+
+\myincfig{fig-zScoreInt}{\textwidth}{This figure shows the $z$-score for the
+common VBP of Gavin et al.'s \cite{Gavin2006} data against Krogan et al.'s 
+\cite{Krogan2006} data. We can see from the figure that the highest concentration
+of $z$-scores is off the origin. There is also evidence that proteins which have
+relatively large $z$-scores in absolute value in one experiment will also have
+relatively large $z$-scores in the other.
+}
+
+\myincfig{fig-newZ}{\textwidth}{This figure shows the $z$-score for the
+common VBP of Gavin et al.'s \cite{Gavin2006} data against Krogan et al.'s 
+\cite{Krogan2006} data when we restrict first and then find the systematic proteins. 
+}
+
+\newpage
+%--------------------------------------------------
+\section{Stochastic Error Analysis: 
+  Estimation of $\pfp$ and $\pfn$ by the method of moments}
+%--------------------------------------------------
+\subsection{Derivation}  
+%--------------------------------------------------
+\begin{tabular}{rp{0.25\textwidth}p{0.65\textwidth}}
+
+$N \choose 2$&&The total number of possible interactions (excluding homomers)\\
+$n$&&the true number of interactions\\
+$m$&$={N \choose 2}-n$&the true number of non-interactions\\
+$X_1$&&observed number of reciprocated edges\\
+$X_2$&&observed number of non-edges\\
+$X_3$&$=n+m-X_1-X_2$&observed number of unreciprocated eges
+\end{tabular}
+\par\vspace*{1ex}
+\noindent we have
+\begin{eqnarray}
+E[X_1] &=& n\,(1-\pfn)^2+m\,\pfp^2\label{x1}\\
+E[X_2] &=& n\,\pfn^2+m\,(1-\pfp)^2\label{x2}\\
+E[X_3] &=& 2n\,\pfn(1-\pfn)+2m\,\pfp(1-\pfp)\label{x3}
+\end{eqnarray}
+
+Only two of the three equations~\eqref{x1}--\eqref{x3} are
+independent, any two of them imply the third. 
+Our goal is to estimate $\pfp$, $\pfn$. We can replace the
+expectation values on the left side of
+Equations~\eqref{x1}--\eqref{x3} by the observed sample values $x_1$,
+$x_2$, $x_3$. Since we do not know $n$, the above system of two
+independent equations for three variables defines a one-dimensional
+solution manifold.
+
+We will parameterize that manifold by $n$ ($0\le n\le {N \choose 2}$) in
+$(\pfp,\pfn)$-space. Relevant solutions are those for which 
+$0\le \pfp,\pfn \le 1$.
+
+Consider that $n$ is given. Let us solve 
+Equations~\eqref{x1}--\eqref{x3} for $\pfp$ and $\pfn$. First,
+subtracting $\eqref{x4} = \eqref{x1} - \eqref{x2}$, we have
+\begin{eqnarray}
+x_1-x_2&=&n\,(1-2\pfn)-m\,(1-2\pfp)\label{x4}\\
+\Leftrightarrow\quad
+\pfn&=&\frac{1}{2n}\left((x_2-m)-(x_1-n)+2m\,\pfp\right)\nonumber\\
+\pfn&=&\frac{1}{2n}\left(\Delta+2m\,\pfp\right),\label{q}
+\end{eqnarray}
+where we have defined $\Delta:= (x_2-m)-(x_1-n)$ for convenience.
+We can plug this expression for $\pfn$ into Equation~\eqref{x2} and obtain
+\begin{equation}
+\underbrace{\left(n+m\right)}_{=:a} \pfp^2 + 
+\underbrace{\left(\Delta-2n\right)}_{=:b} \pfp + 
+\underbrace{n+\frac{\Delta^2}{4m}-\frac{n}{m}x_2}_{=:c} = 0.
+\end{equation}
+The equation $a(\pfp)^2 + b(\pfp) + c = 0$ is solved by
+\begin{equation}
+(\pfp)_{1,2}=\frac{-b\pm\sqrt{b^2-4ac}}{2a}.\label{p}
+\end{equation}
+Hence, the problem is solved: for data $N$, $x_1$, $x_2$
+(from these, $x_3$ is implied) and for all possible (unknown) 
+$n=0, 1, \ldots, {N \choose 2}$ 
+we can calculate $\pfp$ via Equation~\eqref{p}, then $\pfn$ via
+Equation~\eqref{q}. Only some of the theoretically possible 
+values of $n$ will lead to admissible solutions for $\pfp$ and 
+$\pfn$. This is exemplified in the following section.
+
+%--------------------------------------------------
+\subsection{Computation}  
+%--------------------------------------------------
+The function \Rfunction{estErrProbMethodOfMoments} in the
+\Rpackage{ppiStats} package implements the computations described in
+the previous section. 
+
+%--------------------------------------------------
+\subsubsection{Test on simulated data}  
+%--------------------------------------------------
+First, we want to gain confidence in the algorithm and its software
+implementation by looking at simulated data.
+The function \texttt{sim} calculates $E[X_1]$, $E[X_2]$ and $E[X_3]$ according
+to Equations~\eqref{x1}--\eqref{x3}. Its arguments 
+\texttt{pfp} ($\pfp$), \texttt{pfn} ($\pfn$),
+\texttt{ntot} ($N$) need to be scalars, \texttt{n1} ($n$) can be a vector.
+% 
+<<simulate>>=
+sim = function(n1, pfp, pfn, ntot) { 
+##N   := ntot
+##n   := n1
+##m := n2
+  nEdges = ntot*(ntot-1)/2
+  stopifnot(length(pfp)==1, length(pfn)==1, length(ntot)==1, 
+     all(n1<=nEdges)) 
+  n2 = nEdges-n1
+  cbind(x1 = n1*(1-pfn)^2 + n2*pfp^2,
+        x2 = n1*pfn^2 + n2*(1-pfp)^2,
+        x3 = 2*n1*pfn*(1-pfn)+2*n2*pfp*(1-pfp))
+}
+@ 
+%
+We consider the following example.
+%
+
+<<example>>=
+ntot  = 2000
+n1 = 12000
+pfp = 0.001
+pfn = 0.1
+s = sim(n1=n1, pfp=pfp, pfn=pfn, ntot=ntot)
+s
+@ 
+%
+<<plotpfppfn, echo=FALSE, results=hide>>=
+plotpfppfn = function(r, main, qmax=0.8, what="2", add=FALSE, ...) {
+
+  p = r[, paste("pfp", what, sep="")]
+  q = r[, paste("pfn", what, sep="")]
+  cl = which((p>=0) & (p<=1) & (q>=0) & (q<=1))
+  if(!add) {
+    main = sprintf("%s -- sol. %s", main, what)
+    if(any(cl, na.rm=TRUE)) {
+      plot(p[cl], q[cl], type="l", xlab=expression(p[FP]), ylab=expression(p[FN]), 
+           main=main, ylim=c(0, qmax), xlim=c(0, max(p[cl])), ...)
+      sel = cl[round(seq(1, length(cl), length=4))]
+      points(p[sel], q[sel], pch=16, col="orange")
+      text(p[sel], q[sel], r[sel, "nint"], xpd=NA, col="blue")
+    }
+    else {
+      plot(0:1, 0:1, main=main, xlab="p", ylab="q", type="n", ...)
+      text(0.5, 0.5, "no solution")
+    }
+  } 
+  else {
+    lines(p[cl], q[cl], ...)
+  } 
+}
+@ 
+%
+Now pretend we found data with 
+$x_1=$\Sexpr{round(s[1, "x1"])},
+$x_2=$\Sexpr{round(s[1, "x2"])} and
+$x_3=$\Sexpr{round(s[1, "x3"])}, and we try out many possible values of 
+\texttt{n1}. The plot is shown in Figure~\ref{fig-plotpqsim}.
+%
+<<plotpqsim, echo=TRUE,fig=TRUE,eps=FALSE,include=FALSE,width=5,height=5>>=
+n1try = seq(1, 3*n1, by=12)
+r = estErrProbMethodOfMoments(n1try, nrec=round(s[1,"x1"]), 
+     nunr=round(s[1, "x3"]), ntot=ntot)
+plotpfppfn(r, main=sprintf("Sim. data (ntot=%d, pfp=%g, pfn=%g)", ntot, pfp, pfn), qmax=0.35)
+@
+%
+\myincfig{fig-plotpqsim}{0.7\textwidth}{The solution manifold.
+  %The left column corresponds to ``+'' in Equation~\eqref{p},
+  %the right column to ``-''.
+  %The top row shows the whole range of solutions, the bottom row
+  %only those with $0\le p,q \le 1$. 
+The numbers in blue are the corresponding values of $n_1$, 
+the corresponding (unknown) true number of interactions.}
+
+We can also  verify that if we provide the correct value 
+\texttt{n1}=\Sexpr{n1},
+we recover the original probabilities:
+%
+<<solve2, print=TRUE>>=
+res = estErrProbMethodOfMoments(n1, nrec=s[1, "x1"], nunr=s[1, "x3"], ntot=ntot)
+@ 
+%
+<<echo=FALSE, results=hide>>=
+tmpfun=function(x)
+  if(!isTRUE(x))
+    warning(sprintf("\n\nWarning\n%s\nPlease fixe me\n\n", x))
+tmpfun(all.equal(res[1, "pfp2"], pfp))
+tmpfun(all.equal(res[1, "pfn2"], pfn))
+@ 
+%--------------------------------------------------
+\subsection{Application to the PPI datasets}
+%--------------------------------------------------
+
+<<getNrecNunr, echo=FALSE, results=hide>>=
+getNrecNunr = function(x) {
+
+##"/2" gets rid of the double counting via the 
+##colSums call above and the addition operator below
+   r =  colSums(getDegrees(x))/2
+   c(nrow(x), r["nr"], r["ni"]+r["no"])
+}
+degs = eapply(bpMat, getNrecNunr)
+
+@ 
+%
+<<degs, echo=FALSE, results=hide>>=
+degs = sapply(degs, "(")
+rownames(degs) = c("ntot", "nrec", "nunr")
+degs
+
+degs1 = eapply(bpRed, getNrecNunr)
+  degs1 <- sapply(degs1, "(")
+  rownames(degs1) = c("ntot", "nrec", "nunr")
+@ 
+
+We now take the experimental datasets obtained from
+\cite{Ito2001, Uetz2000, Cagney2001, Hazbun2003, Tong2002, 
+Gavin2002, Ho2002, Krogan2004, Gavin2006, Krogan2006} to 
+obtain the 1-dimensional manifolds.
+
+
+<<pfppfnUnfiltSep, echo=FALSE, fig=TRUE, eps=FALSE,include=FALSE,width=8.5,height=12, results=hide>>=
+par(mfrow=c(4,3))
+for (i in 1:ncol(degs)) {
+  n1 = seq(1, round(3*(sum(degs[c("nrec", "nunr"), i]))))
+  r = estErrProbMethodOfMoments(n1, nrec=degs["nrec", i], 
+     nunr=degs["nunr", i], ntot=degs["ntot", i])
+  plotpfppfn(r, main = colnames(degs)[i])
+}
+@
+
+<<pfppfnFiltSep, echo=FALSE, fig=TRUE, eps=FALSE,include=FALSE,width=8.5,height=12, results=hide>>=
+par(mfrow=c(4,3))
+for (i in 1:ncol(degs1)) {
+  n1 = seq(1, round(3*(sum(degs1[c("nrec", "nunr"), i]))))
+  r = estErrProbMethodOfMoments(n1, nrec=degs1["nrec", i], 
+     nunr=degs1["nunr", i], ntot=degs1["ntot", i])
+  plotpfppfn(r, main = colnames(degs1)[i])
+}
+@
+
+We plot each dataset individually to ascertain the 
+range for $\pfp$ and for $\pfn$. The result of this is plotted in 
+Figure~\ref{fig-pfppfnUnfiltSep} for the unfiltered data
+and in Figure~\ref{fig-pfppfnFiltSep} for the filtered data. 
+
+\newpage
+
+\myincfig{fig-pfppfnUnfiltSep}{\textwidth}{The solution manifolds
+  (one plot per dataset, unfiltered data).}
+
+\newpage
+
+\myincfig{fig-pfppfnFiltSep}{\textwidth}{The solution manifolds
+  (one plot per dataset, filtered data)}
+
+
+<<pfppfnAll2gether, echo=FALSE, fig=TRUE, eps=FALSE,include=FALSE,width=10,height=15, results=hide>>=
+  colors = brewer.pal(7, "Set1")
+  par(mfrow=c(2,2), pty="s", lwd=2)
+  expts = list(APMS = grep("^Krogan|^Gavin|^Ho", colnames(degs), 
+                 value=TRUE), Y2H = grep("^Ito|^Uetz|^Cagney|^Tong|^Hazbun", 
+                                colnames(degs), value=TRUE))
+  
+  
+  xmax = c(Y2H=0.055, APMS=0.02)
+  
+  nmaxFun = function(x) {floor(min(4*(sum(x[c("nrec", "nunr")])), 
+    x["ntot"]*(x["ntot"]+1)/2))}
+  
+  counter <- 1
+  
+  for(what in names(expts)) {
+    plot(c(0, xmax[what]), c(0,1), type="n", xlab=expression(p[FP]), 
+         ylab=expression(p[FN]), 
+         main=paste(letters[counter],". ", what, " - Unfiltered Data", 
+           sep=""), 
+         xlim=c(0,xmax[what]))
+
+    newName <- sub("-$", "", sub("BPGraph", "-", expts[[what]]))
+    legend(xmax[what], 1, newName, lty=1, lwd=2, 
+           col=colors[seq(along=expts[[what]])], xjust=1, yjust=1)
+
+    for (i in seq(along=expts[[what]])) {
+      exnm = expts[[what]][i]    
+      r = estErrProbMethodOfMoments(1:nmaxFun(degs[, exnm]), 
+        nrec=degs["nrec", exnm], 
+        nunr=degs["nunr", exnm], 
+        ntot=degs["ntot", exnm])
+      plotpfppfn(r, add=TRUE, col=colors[i])
+    }
+    counter = counter+1
+    
+  }
+  
+for(what in names(expts)) {
+  plot(c(0, xmax[what]), c(0,1), type="n", xlab=expression(p[FP]), 
+       ylab=expression(p[FN]), 
+       main=paste(letters[counter],". ",what, " - Filtered Data", sep=""), 
+       xlim=c(0,xmax[what]))
+  
+    for (i in seq(along=expts[[what]])) {
+      exnm = expts[[what]][i]    
+      r = estErrProbMethodOfMoments(1:nmaxFun(degs1[, exnm]), 
+        nrec=degs1["nrec", exnm], 
+        nunr=degs1["nunr", exnm], 
+        ntot=degs1["ntot", exnm])
+      plotpfppfn(r, add=TRUE, col=colors[i])
+    }
+    counter <- counter+1
+  }
+  
+@
+%
+Next we wanted to superimpose all experiments of the same type
+(i.e. the same system was used to determine the interactions) 
+so that we can compare the solutions curves across experiments.
+We do this first on the set of VBP for each dataset, and
+these are rendered in the top two plots. After, 
+we filtered out the proteins likely to be affected by a 
+systematic bias and recalibrated the solution curves. These 
+are rendered in the bottom two plots.
+The result of this is plotted in Figure~\ref{fig-pfppfnAll2gether}. 
+
+\myincfig{fig-pfppfnAll2gether}{0.75\textwidth}{
+  These figures detail the error statistics for each of the datasets.
+  Plot $a$ generates the 1-dimensional solution curves for $(\pfp,\pfn)$
+  parametrized by $n$ for the AP-MS datasets. Plot $b$ generates similar
+  1-dimensional curves but for the Y2H datasets. Plots $c$ and $d$ 
+  recalculates these solution curves for the AP-MS and Y2H respectively.
+  These recalculations are done by setting aside those interactions 
+  which appear to be affected by a systeamtic bias of the experimental 
+  assay. Having set aside those interactions, the range for $\pfp$ is
+  substantially constrained for the solution curves characterizing
+  \cite{Gavin2006, Krogan2006} implying that systematic errors may 
+  potentially have large effects on $\pfp$.}
+
+\section{Stochastic Error Analysis: Estimation of Unreciprocated
+  and Reciprocated FP/FN Errors within the Measured Data}
+
+<<pfpStats, echo=FALSE, results=hide>>=
+if("Zhao2005BPGraph" %in% names(vbp)){
+  ind <- which(names(vbp) == "Zhao2005BPGraph")
+  vbp <- vbp[-ind]}
+stats <- matrix(0,12,7)
+stats[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow) 
+stats[,2] <- choose(stats[,1], 2)
+stats[,3] <-  c(.0008, .04, .07, .016, .003, .015, .004, .005, 
+                .012, .0017, .0019, .0025)
+stats[,4] <- round(2*stats[,2]*stats[,3]*(1-stats[,3]))
+stats[,5] <- round(stats[,2]*stats[,3]^2, digits=2)
+stats[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
+stats[,7] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x*t(x))/2})
+rownames(stats) <- dNames1
+colnames(stats) <- c("N","m","pfp","E[Z]","E[Z2]","z","z2")
+stats
+@ 
+
+<<pfnStats, echo=FALSE, results=hide>>=
+stats2 <- matrix(0, 12, 7)
+stats2[,1] <- sapply(as.list(bpRed)[names(vbp)], nrow)
+stats2[,2] <- c(1200, 8, 2, 20, 78, 34, 584, 649, 223, 2429, 11744, 100)
+stats2[,3] <- c(.76, 0.39, 0.3, .55, .65, .55, .44, .68, .37, .44, .8, .38)
+stats2[,4] <- round(2*stats2[,2]*stats2[,3]*(1-stats2[,3]))
+stats2[,5] <- round(stats2[,2]*stats2[,3]^2)
+stats2[,6] <- sapply(as.list(bpRed)[names(vbp)], function(x) {sum(x-(x*t(x)))})
+stats2[,7] <- sapply(as.list(bpRed)[names(vbp)], 
+                                      function(x) {sum(!(x*t(x)))/2})
+rownames(stats2) <- dNames1
+colnames(stats2) <- c("N","n","pfn","E[W]","E[W2]","w","w2")
+stats2
+@ 
+
+Using the Multinomial error model, we can estimate the expected number 
+unreciprocated and reciprocated number of false positive as well as false negative
+interactions. For these estimates, we use only the filtered set of data
+on the protein interactions (let $N$ be the number of proteins in the filtered
+set). We begin by estimating the FP errors. To calculate the expected number
+of FP observations, we need estimates for $\pfp$ as well as $m$ (since FP is
+a property on $I^c$). To obtain these estimates, we assume that $\pfn=0$ so that
+all errors will be strictly FP. This makes the estimate for $\pfp$ maximal, and
+the number of expected FP observations that we calculate will all be for the worst
+case scenairo. Using the Multinomial error model, we generate $\pfp$'s for all
+the datasets. We can also generate the value for $m$ by assuming that $\pfn=0$,
+but for the sake of convenience, we will approximate $m$ by $N \choose 2$. 
+Unreciprocated FP errors can be estimated by $2\pfp(1-\pfp)m$; reciprocated,
+by $\pfp^2m$. Lastly we provide the number of observed unreciprcated and
+reciprocated interactions to serve as a reference. These estimates can be found
+in Table~\ref{ta:pfp}
+
+<<pfpTab, echo=FALSE, results=tex>>=
+xtable(stats, display=c("s","d","d","fg","d","fg","d","d"), label="ta:pfp", 
+       tabular.environment="longtable", floating=FALSE, size="small",
+       caption = "Estimates of FP unreciprocated and reciprocated errors
+       via the Multinomial error Model. Z is the random variable 
+       associated with unreciprocated FP errors; Z2 corresponds with 
+       reciprocated FP errors. z and z2 denote the observed number of
+       unreciprocated and reciprocated interactions found in the data.")
+@ 
+
+Similarly, we also use the Multinomial error model to estimate the expected
+number of unreciprocated and reciprocated FN observations. We 
+estimate $\pfn$ and $n$ by assuming that $\pfp=0$, and so, again we presume 
+that all errors are strictly FN. This makes $\pfn$ maximal, and this also 
+makes these estimates for FN errors in the worst case scenario. Similar to the
+FP estimates, unreciprocated FN errors are estimated by $2\pfn(1-\pfn)n$; 
+reciprocated by $\pfn^2n$. We also provide the number of observed unreciprcated 
+and reciprocated non-interacting protein pairs found within the datasets. 
+These estimates can be found in Table~\ref{ta:pfn}
+
+<<pfnTab, echo=FALSE, results=tex>>=
+xtable(stats2, display=c("s","d","d","f","d","d","d","d"), label="ta:pfn", 
+       tabular.environment="longtable", floating=FALSE, size="small", 
+       caption = "Estimates of FN unreciprocated and reciprocated errors
+       via the Multinomial error Model. W is the random variable 
+       associated with unreciprocated FP errors; W2 corresponds with 
+       reciprocated FP errors. w and w2 denote the observed number of
+       unreciprocated and reciprocated interactions found in the data.")
+@ 
+
+
+\section{Cross Data Integration and Analysis}
+We have shown that protein interaction analysis can be measured
+by three quality metrics: 1. coverage, 2. proteins that might
+be affected by systematic bias due to the experiment, and 3.
+general stochastic variation. It is necessary to consider each of 
+these three metrics if one would like to begin cross experimental
+analysis. 
+
+<<matrixPlot, fig=TRUE, width=10, height=10, prefix=FALSE, echo=FALSE, include=FALSE, results=hide>>=
+firstx <- c(0, 0.6)
+firsty <- c(0, 0.6)
+secondx <- c(0.4, 0.9)
+secondy <- c(0.4, 0.9)
+colors <- c(brewer.pal(12, "Paired")[c(4,10,6)], "gray85")
+lwd <- 2
+
+grid.newpage()
+pushViewport(viewport(width = 0.8, height = 0.8))
+    
+grid.lines(firstx, 1.05, gp = gpar(col = colors[1], lwd = lwd))
+grid.text("Prey of Experiment 1", 0.15, 1.07,check.overlap=TRUE, 
+          gp = gpar(col = colors[1], cex = 2))
+grid.lines(-0.05, 1 - firsty, gp = gpar(col = colors[1], lwd = lwd),
+           name = "Baits of Experiment 1")
+grid.text("Baits of Experiment 1", -0.07, 0.855, gp = gpar(col = colors[1], 
+                                              cex=2), rot=90)
+grid.lines(secondx, 1.10, gp = gpar(col = colors[2], lwd = lwd),
+           name = "Prey of Experiment 2")
+grid.text("Prey of Experiment 2", 0.755, 1.085, gp = gpar(col = colors[2], 
+                                              cex=2))
+grid.lines(-0.10, 1 - secondy, gp = gpar(col = colors[2], lwd = lwd),
+           name = "Baits of Experiment 2")
+grid.text("Baits of Experiment 2", -0.083, 0.245, gp = gpar(col = colors[2], 
+                                              cex=2), rot=90)
+    
+grid.rect(x = min(firstx, secondx),
+          y = 1 - min(firstx, secondx),
+          width = max(firstx, secondx) - min(firstx, secondx),
+          height = max(firsty, secondy) - min(firsty, secondy),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[4], col = "transparent"))
+
+grid.rect(x = min(firstx),
+          y = 1 - min(firstx),
+          width = max(firstx) - min(firstx),
+          height = max(firsty) - min(firsty),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[1], col = "transparent"))
+
+
+grid.rect(x = min(secondx),
+          y = 1 - min(secondx),
+          width = max(secondx) - min(secondx),
+          height = max(secondy) - min(secondy),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[2], col = "transparent"))
+
+grid.rect(x = min(secondx),
+          y = 1 - min(secondx),
+          width = max(secondx) - min(secondx),
+          height = max(secondy) - min(secondy),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[2], col = "transparent"))
+
+grid.rect(x = min(secondx),
+          y = 1 - min(secondx),
+          width = max(firstx) - min(secondx),
+          height = max(firsty) - min(secondy),
+          just = c("left", "top"),
+          gp = gpar(fill = colors[3], col = "transparent"))
+
+    
+grid.rect()
+@ 
+
+\myincfig{matrixPlot}{\textwidth}{
+  A schematic representation of the interactome coverage of two 
+  protein interaction experiments. The adjacency matrix of the 
+  complete interactome is represented by the large square. Experiment 
+  1 covers a certain set of proteins as baits (rows covered by the
+  green vertical line) and as prey (columns covered by the green 
+  horizontal line). The tested interactions for Experiment 1 are 
+  contained within the green rectangle. Similarly, 
+  Experiment 2 covers another set of proteins and tests for a set of 
+  interactions contained in the purple rectangle. The intersection 
+  of the rectangles, the red area, are the bait to prey interactions 
+  tested by both experiments, and the union are the interactions tested 
+  by at least one of the experiments. Note that the interactions in the 
+  light gray area were tested by \emph{neither} experiment either because
+  there are missing tested prey (upper right corner) or missing tested
+  baits (lower left corner). The interactions in the white region are also
+  tested by \emph{neither} experiment because both the baits and the prey
+  were not tested.}
+
+As an example we show how coverage (and sampling) is fundamental for 
+inter-experimental analysis. 
+
+The possible pitfalls of naive comparisons between two experimental
+datasets are depicted in Figure~\ref{matrixPlot}. %~\ref{fig:matPlot}. 
+The interactions in the intersection of the rectangles (red) 
+were tested by both; the interactions in the green and purple 
+areas were tested by one experiment but not the other; and the 
+interactions in the light grey areas were tested by 
+neither experiment. A data analysis that does not keep track of these
+different coverage characteristics risks being misleading. Therefore,
+coverage must be taken into consideration when integrating and 
+comparing multiple datasets. Additionally, discrepancies will arise 
+due to the set conditions of each experiment, and these discrepancies 
+should be isolated from the variability across the experiments so 
+the error rates have a more meaningful interpretation. Ultimately,
+there are still many more steps needed to integrate datasets,
+and we discuss a few necessary components.
+
+%\begin{rotate}{90}
+<<edaTable, echo=FALSE, results=tex>>=
+
+xtable(EDA, display = c("s","d","d", "d","f", "d", "d", "f", "f", "d", "f"), 
+       label = "ta:eda", 
+       caption="A general overview of seven Y2H and five AP-MS experiments:
+                VB - the number of viable baits; CB - the number of 
+                cloned (hybridized) baits 
+                if available; TB - the 
+                total number of baits; VB/TB; 
+                VP - the number of viable prey; VBP - the number of proteins observed
+                as both bait and prey;
+                VBP/VB; VP/VB, TI - the total number of 
+                interactions observed; TI/VB.", 
+       tabular.environment="sidewaystable", floating=FALSE, 
+       size="small")
+
+@ 
+
+<<commProteinsY2H, echo=FALSE, results=hide>>=
+commProtsY2H <- matrix(0, nrow = 8, ncol=8)
+dimnames(commProtsY2H) <- list(c(dNames[1:7], dNames[13]), c(dNames[1:7], dNames[13]))
+vBaits1 <- c(viableBaits[1:7], viableBaits[13])
+vPrey1 <- c(viablePrey[1:7], viablePrey[13])
+
+for(i in 1:length(vBaits1)){
+    for (j in i:length(vBaits1)){
+        commProtsY2H[i,j] <- length(intersect(vBaits1[[i]], vBaits1[[j]]))
+
+    }    
+
+    for(k in 1:i){
+        commProtsY2H[i,k] <- length(intersect(vPrey1[[i]], vPrey1[[k]]))
+    }
+}
+diag(commProtsY2H) <- as.numeric(NA)
+
+blah = function(x) paste(
+  "This table shows two distinct statistics on the pair-wise comparison of the", 
+   "data sets. The values above the diagonal give the number of",
+  "common viable baits, the values below the diagonal give the number", 
+  "of common viable prey.")
+@ 
+<<printCommProtsY2H, echo=FALSE, results=tex>>=
+xtable(commProtsY2H, display=c("s", "d", "d", "d", "d", "d", "d", "d", "d"),
+                 label="ta:y2hComp", caption = blah("Y2H"),
+                 tabular.environment="longtable", floating=FALSE, size="small" )
+@ 
+
+<<commProteinsAPMS, echo=FALSE, results=hide>>=
+commProtsAPMS <- matrix(0,5,5)
+viableBaitsA <- viableBaits[8:12]
+viablePreyA <- viablePrey[8:12]
+
+dimnames(commProtsAPMS) <- list(dNames[8:12], dNames[8:12])
+for(i in 1:5){
+    for (j in i:5){
+        commProtsAPMS[i,j] <- length(intersect(viableBaitsA[[i]], viableBaitsA[[j]]))
+
+    }    
+
+    for(k in 1:i){
+        commProtsAPMS[i,k] <- length(intersect(viablePreyA[[i]], viablePreyA[[k]]))
+    }
+}
+diag(commProtsAPMS) <- as.numeric(NA)
+@ 
+
+<<printCommProtsAPMS, echo=FALSE, results=tex>>=
+xtable(commProtsAPMS, display=c("s", "d", "d", "d", "d", "d"),
+                 label="ta:apmsComp", caption = blah("APMS"),
+                  tabular.environment="longtable", floating=FALSE, size="small")
+
+@
+
+\bibliographystyle{plain} 
+\bibliography{proteinReview}
+\end{document}
