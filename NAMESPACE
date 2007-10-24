@@ -1,0 +1,10 @@
+import("methods")
+import("Category")
+import("AnnotationDbi")
+importMethodsFrom("Biobase", "annotation", "description")
+
+export(assessSymmetry, bpMatrix, calcInOutDegStats, degreeEstimates,
+       estErrProbMethodOfMoments, estimateCCMErrorRates, genBPGraph,
+       idHomodimers, idStochastic, idSystematic, idViableProteins,
+       nullDistDoublyTestedEdges, ppiBuildParams4GO, ppiHGTest4GO,
+       ppiBuildParams4PFAM, ppiHGTest4PFAM, twowayPERM)
