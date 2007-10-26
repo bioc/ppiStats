@@ -1,13 +1,14 @@
 estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
-         obsPropThresh=.7,SystematicpThresh=.01, datamat=NULL){
-
+                                  obsPropThresh=.7,SystematicpThresh=.01,
+                                  nBS = 100, seed = 123){
+  set.seed(123)
+  
   ##there is apart of the code when you use datamat, but you never
   ##define it as a local variable. you have defined datamat as a global
   ##variable in your script...it is what was passed into this function
   ##as the parameter m
-  if(is.null(datamat)){
-    datamat <- m
-  }
+  datamat <- m
+  
 
   stopifnot(all(m %in% 0:1))
   
