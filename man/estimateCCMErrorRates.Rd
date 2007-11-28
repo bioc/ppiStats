@@ -7,27 +7,40 @@
   gold standard}
 \usage{
 estimateCCMErrorRates(m,GS,filterSystematic=TRUE,	
-         obsPropThresh=.7,SystematicpThresh=.01,
-         nBS = 100, seed = 123)
+         obsPropThresh=1,SystematicpThresh=.01)
 }
 \arguments{
   \item{m}{The bait to prey data adjacency matrix. Baits index the rows and prey index
-           the column.}
+           the columns.}
   \item{GS}{A gold standard protein complex interaction incidence matrix. Proteins index
-            the rows and protein complex index the columns. }
-  \item{filterSystematic}{A logical. If true, all proteins with with highly uneven
+            the rows and protein complexes index the columns. }
+  \item{filterSystematic}{A logical. If TRUE, all baits with with highly uneven
                           directed degree will be filtered out of the data.}
   \item{obsPropThresh}{A numeric between 0 and 1. The proportion of tested proteins found
                        within a protein complex needed to keep that protein complex within
         	       the gold standard set.}
   \item{SystematicpThresh}{A numeric between 0 and 1. The p-value threshold by which
                            systematic errors are filtered.}
-  \item{nBS}{A positive integer. The number of times needed to bootstrap.}
-  \item{seed}{A positive integer. The seed for the random number generator. }
 }
 
 \value{
  A list:
+
+
+  \item{globalpTP}{A numeric between 0 and 1.  Estimate of pTP.}
+  \item{globalpTPSE}{A numeric.  Estimate of standard error of globalpTP estimate.}
+  \item{globalpFP}{A numeric between 0 and 1.  Estimate of pFP.}
+  \item{pTP95CI}{A vector of length 2.  95 percent confidence interval upper and lower
+  bounds for globalpTP estimate.}
+  \item{pFP95CI}{A vector of length 2.  95 percent confidence interval upper and lower
+  bounds for globalpFP estimate.}
+  \item{nEligComplexes}{A numeric.  Number of complexes from GS that met
+  obsPropThresh criteria.}
+  \item{nEligBaits}{A numeric. Total number of eligible baits in GS set.}
+  \item{nEligEdges}{A numeric.  Total number of eligible edges in GS set.}
+  \item{nBaitsInComplexes}{A vector.  Number of baits in each eligible complex.}
+  \item{complexSizes}{A vector. Size of each complex in GS set.}
+
 }
 
 \details{The model is described in the manuscript
@@ -36,12 +49,15 @@ by D. Scholtens et al.
 }
 
 \references{Scholtens D, Chiang T, Huber W, Gentleman R.  Estimating node
-degree in bait-prey graphs. (Submitted).}
+degree in bait-prey graphs. \emph{Bioinformatics}.  To appear.}
 
 \author{T. Chiang and D. Scholtens}
 
 \examples{
-
+data(Ho2002BPGraph)
+data(ScISIC)
+Ho2002mat = as(Ho2002BPGraph,"matrix")
+estimateCCMErrorRates(Ho2002mat,ScISIC)$globalpTP
 }
 
 
