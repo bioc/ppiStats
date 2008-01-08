@@ -6,7 +6,7 @@
   for direct protein interactions using a protein interaction graph
   gold standard}
 \usage{
-estimatePPIErrorRates(matList,GS)
+estimatePPIErrorRates(matList,GSPos=NULL, GSNeg=NULL)
 }
 \arguments{
   \item{matList}{A named list of list. The names corresponds to a
@@ -20,14 +20,18 @@ estimatePPIErrorRates(matList,GS)
     indexed by the bait proteins and the columns are indexed by the
     prey. The adjacency matrices are 0,1 matrices where an 1 entry
     signifies either a positive interaction relationship or a positive
-    tested relationship. A 0 entry is then well defined. 
-           
-}
-  \item{GS}{A gold standard protein interaction graph given by its
+    tested relationship. A 0 entry is then well defined.}	   
+  \item{GSPos}{A positive gold standard protein interaction graph given by its
   adjacency matrix. The dimension names of this matrix must be the same
   identifying system used for the dimension names for the matrices found
-  within the matList parameter.}
-        }
+  within the matList parameter. An entry of one in this matrix indicates
+  a positive interaction while an entry of zero is inconclusive.}
+  \item{GSNeg}{A negative gold standard protein interaction graph given by its
+  adjacency matrix. The dimension names of this matrix must be the same
+  identifying system used for the dimension names for the matrices found
+  within the matList parameter. An entry of one in this matrix indicates
+  a negative interaction while an entry of zero is inconclusive.}
+}
 
 \value{
   A matrix.
@@ -46,11 +50,15 @@ by D. Scholtens et al.
 }
 
 \references{Scholtens D, Chiang T, Huber W, Gentleman R.  Estimating node
-degree in bait-prey graphs. \emph{Bioinformatics}.  To appear.}
+degree in bait-prey graphs. \emph{Bioinformatics}.}
 
 \author{T. Chiang and L. Wang}
 
 \examples{
+load(system.file("extdata", "intacty2hppMatrix.rda", package="ppiStats"))
+load(system.file("extdata", "PPIpos", package="ppiStats"))
+x = intacty2hppMatrix[c("EBI-389903","EBI-783101")]
+estimatePPIErrorRates(x, GSPos=PPIpos)
 }
 
 
