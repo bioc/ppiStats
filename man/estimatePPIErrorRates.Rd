@@ -6,7 +6,7 @@
   for direct protein interactions using a protein interaction graph
   gold standard}
 \usage{
-estimatePPIErrorRates(matList,GSPos=NULL, GSNeg=NULL)
+estimatePPIErrorRates(matList,GSPos=NULL,GSNeg=NULL)
 }
 \arguments{
   \item{matList}{A named list of list. The names corresponds to a

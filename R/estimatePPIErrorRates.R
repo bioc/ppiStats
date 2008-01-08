@@ -124,17 +124,21 @@ useMethodOfMoments <- function(matList, errorList, estFP=TRUE){
   ##x123 computes the statistics needed to estimate the pfp rate given the pfn rate
   x123 <- lapply(matList, getx123)
   
-  
-  errorList2 <- mapply(getFPrateFromFNrate, x123, errorList)
-  unlist(errorList2)
-  errorMat <- cbind(errorList2, errorList)
   if(estFP){
+    errorList2 <- mapply(getFPrateFromFNrate, x123, errorList)
+    errorMat <- cbind(errorList2, errorList)
     colnames(errorMat) <- c("pFP","pFN")
   }
   else{
+    errorList2 <- mapply(getFNrateFromFPrate, x123, errorList)
+    errorMat <- cbind(errorList2, errorList)
     colnames(errorMat) <- c("pFN","pFP")
     errorMat <- errorMat[,2:1]
+    
   }
+
+  unlist(errorList2)
+
   rownames(errorMat) <- names(matList)
   return(errorMat)
   
@@ -183,4 +187,16 @@ getFPrateFromFNrate <- function(y, FNrate) {
     }
   if(!is.na(FP1) && FP1!=(1-FNrate)){ return(FP1)}
   else{ return(FP2)}
+}
+
+getFNrateFromFPrate <- function(y, FPrate){
+  ##fix me...need to deconvolute Li's code
+  ##symmetry does not work because the number of
+  ##truly interacting protein pairs (n) is
+  ##not the same as the number of non-interacting
+  ##pairs
+
+  
+  return("not working yet")
+
 }
