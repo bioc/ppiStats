@@ -3,7 +3,7 @@
 estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
                                   obsPropThresh=1,SystematicpThresh=.01){
 
-  
+  options(error=recover)
   ##########################################################
   ##                                                      ##
   ##  Create two matrices mFilt and mVBPFilt.             ##
@@ -17,9 +17,19 @@ estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
   
   allBaits <- rownames(m)
   allPrey <- setdiff(colnames(m),allBaits)
+  ##TC writes that the allPrey seems to be prey Only and not all prey perse
+  ##allPrey <- colnames(m)
+
+  vb <- names(rowSums(m)>0)
+  vp <- names(colSums(m)>0)
+  vbp <- intersect(vb,vp)
   
-  VBPs <- allBaits[(rowSums(m)>0) & 
-                   (colSums(m[,allBaits])>0)]
+  #VBPs <- allBaits[(rowSums(m)>0) & 
+  #                 (colSums(m[,allBaits])>0)]
+  ##TC writes that the above code fails ... subset out of bounds for
+  ##m[,allBaits] since a bait need not be a prey
+  VBPs <- vbp
+
   VPOs <- allPrey[(colSums(m[,allPrey])>0)]
   mVBP <- m[VBPs,c(VBPs,VPOs)]
 
@@ -91,6 +101,7 @@ estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
     
   #find VBPs in both data sets
   commonNodes <- intersect(rownames(mVBPFilt),rownames(mGS))
+  
   mgs <- mGS[commonNodes,commonNodes]
   ms <- mVBPFilt[commonNodes,commonNodes]
   
@@ -98,7 +109,9 @@ estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
   #these are observed 'true positives'
   msTP <- ms * mgs
   
+  
   msTPd <- getDegrees(msTP)
+  
   mgsd <- getDegrees(mgs)[,"nr"]
   
   totalTPR <- sum(msTPd[,"nr"])/2
@@ -120,6 +133,7 @@ estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
 
   pTP95CI = c(pTP95L,pTP95U)
   names(pTP95CI) = c("95CIlb","95CIub")
+  print(globalpTP)
  
   ##########################################################
   ##                                                      ##  
@@ -157,7 +171,7 @@ estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
 
 
   
-  list(globalpTP=globalpTP,
+  ans <- list(globalpTP=globalpTP,
        globalpTPse=globalpTPse,
        globalpFP=globalpFP,
        pTP95CI = pTP95CI,
@@ -168,7 +182,7 @@ estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
        nBaitsInComplexes=nBaitsInComplexes,
        complexSizes=complexSizes)
   
-  
+  return(ans)
 }
 
 
