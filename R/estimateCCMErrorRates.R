@@ -3,7 +3,7 @@
 estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
                                   obsPropThresh=1,SystematicpThresh=.01){
 
-  options(error=recover)
+  #options(error=recover)
   ##########################################################
   ##                                                      ##
   ##  Create two matrices mFilt and mVBPFilt.             ##
@@ -133,7 +133,7 @@ estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
 
   pTP95CI = c(pTP95L,pTP95U)
   names(pTP95CI) = c("95CIlb","95CIub")
-  print(globalpTP)
+  #print(globalpTP)
  
   ##########################################################
   ##                                                      ##  

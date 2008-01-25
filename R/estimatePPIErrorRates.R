@@ -190,13 +190,27 @@ getFPrateFromFNrate <- function(y, FNrate) {
 }
 
 getFNrateFromFPrate <- function(y, FPrate){
-  ##fix me...need to deconvolute Li's code
-  ##symmetry does not work because the number of
-  ##truly interacting protein pairs (n) is
-  ##not the same as the number of non-interacting
-  ##pairs
 
-  
-  return("not working yet")
+  x1 <- y[[1]]
+  x2 <- y[[2]]
+  x3 <- y[[3]]
+  tot <- sum(y)
+  u<-x1-tot*FPrate^2
+  v<-x2-tot*(1-FPrate)^2
+  a<-u-v
+  b<-2*v
+  c<-(-v)-u*(1-FPrate)^2+v*FPrate^2
+
+  d<-b^2-4*a*c
+  if(d>=0)
+    {
+      FN1<-(-b+sqrt(d))/(2*a)
+      FN2<-(-b-sqrt(d))/(2*a)
+    } else{
+      FN1<-NA
+      FN2<-NA
+    }
+  if(!is.na(FN1) && FN1!=(1-FPrate)){ return(FN1)}
+  else{ return(FN2)}
 
 }
