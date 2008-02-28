@@ -8,4 +8,5 @@ export(assessSymmetry, bpMatrix, calcInOutDegStats, degreeEstimates,
        idHomodimers, idStochastic, idSystematic, idViableProteins,
        nullDistDoublyTestedEdges, ppiBuildParams4GO, ppiHGTest4GO,
        ppiBuildParams4PFAM, ppiHGTest4PFAM, twowayPERM, findDegree,
-       makeBinVect, estimatePPIErrorRates)
+       makeBinVect, estimatePPIErrorRates, createSummaryTables,
+       viabilityCharts, inOutScatterCharts)
