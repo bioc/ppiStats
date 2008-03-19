@@ -1,6 +1,4 @@
-import("methods")
-import("Category")
-import("AnnotationDbi")
+import("methods", "Category", "AnnotationDbi")
 importMethodsFrom("Biobase", "annotation", "description")
 
 export(assessSymmetry, bpMatrix, calcInOutDegStats, degreeEstimates,
