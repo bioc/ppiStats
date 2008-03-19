@@ -1,4 +1,4 @@
-
+ 
 
 estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
                                   obsPropThresh=1,SystematicpThresh=.01){
@@ -148,12 +148,18 @@ estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
   ntot = dim(mVBPFilt)[1]
   
   #find point estimate and CI for pFP
-  globalpFP = estimatepFP(pTPest=globalpTP,totalObsR=totalObsR,totalObsU=totalObsU,ntot=ntot)
-  pFP95U =  estimatepFP(pTPest=pTP95U,totalObsR=totalObsR,totalObsU=totalObsU,ntot=ntot)
-  pFP95L =  estimatepFP(pTPest=pTP95L,totalObsR=totalObsR,totalObsU=totalObsU,ntot=ntot)
+  pFPans = estimatepFP(pTPest=globalpTP,totalObsR=totalObsR,totalObsU=totalObsU,ntot=ntot)
+  globalpFP = pFPans$pFPest
+  probPairs = pFPans$probPairs
+
+  pFP95U =  
+estimatepFP(pTPest=pTP95U,totalObsR=totalObsR,totalObsU=totalObsU,ntot=ntot)$pFPest
+  pFP95L =  
+estimatepFP(pTPest=pTP95L,totalObsR=totalObsR,totalObsU=totalObsU,ntot=ntot)$pFPest
   
   pFP95CI = c(pFP95L,pFP95U)
   names(pFP95CI) = c("95CIlb","95CIub")
+
 
   ##########################################################
   ##                                                      ##  
@@ -176,6 +182,7 @@ estimateCCMErrorRates <- function(m,GS,filterSystematic=TRUE,
        globalpFP=globalpFP,
        pTP95CI = pTP95CI,
        pFP95CI = pFP95CI,
+       probPairs = probPairs,
        nEligComplexes=nEligComplexes,
        nEligBaits=nEligBaits,
        nEligEdges=nEligEdges,
@@ -227,10 +234,20 @@ estimatepFP = function(pTPest,totalObsR,totalObsU,ntot){
  nint <- (max(floor(nintEst)-500,100)):(min(floor(nintEst)+500,ntot*(ntot-1)/2))
  MOMrange <-
     estErrProbMethodOfMoments(nint=nint,nrec=totalObsR,nunr=totalObsU,ntot=ntot)
+
+ pFPs = c(MOMrange[,"pfp1"],MOMrange[,"pfp2"])
+ pFNs = c(MOMrange[,"pfn1"],MOMrange[,"pfn2"])
+ probPairs = cbind(pFPs,pFNs)
+ probPairs = probPairs[order(pFPs),]
+ probPairs = probPairs[probPairs[,"pFPs"]>0 & probPairs[,"pFPs"]<1,]
+ probPairs = probPairs[probPairs[,"pFNs"]>0 & probPairs[,"pFNs"]<1,]
+
  closestpTP <-
-    which.min(abs((1-pTPest)-c(MOMrange[,3],MOMrange[,5])))
- pFPest = c(MOMrange[,2],MOMrange[,4])[closestpTP]	    
- pFPest
+    which.min(abs((1-pTPest)-probPairs[,"pFNs"]))
+ pFPest = probPairs[,"pFPs"][closestpTP]	    
+
+ ans = list(pFPest=pFPest,probPairs=probPairs)
+ ans
 }
 
 
