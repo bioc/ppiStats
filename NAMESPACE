@@ -7,4 +7,4 @@ export(assessSymmetry, bpMatrix, calcInOutDegStats, degreeEstimates,
        nullDistDoublyTestedEdges, ppiBuildParams4GO, ppiHGTest4GO,
        ppiBuildParams4PFAM, ppiHGTest4PFAM, twowayPERM, findDegree,
        makeBinVect, estimatePPIErrorRates, createSummaryTables,
-       viabilityCharts, inOutScatterCharts)
+       viabilityCharts, inOutScatterCharts, separateExptBySize)
