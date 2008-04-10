@@ -1,7 +1,6 @@
 \name{estimateCCMErrorRates}
 \alias{estimateCCMErrorRates}
-\title{Estimate false positive and false negative error probabilities
-  }
+\title{Estimate false positive and false negative error probabilities}
 \description{Estimate false positive and false negative error probabilities
   for complex comembership edges using a protein complex interactome
   gold standard}
