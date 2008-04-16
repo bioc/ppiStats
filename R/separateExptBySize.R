@@ -13,7 +13,7 @@ separateExptBySize <- function(listOfGraphs, bound1, bound2){
   large <- listOfGraphs[size>=bound2]
 
   partitionList <- list()
-  partionList$smallScale <- small
+  partitionList$smallScale <- small
   partitionList$mediumScale <- medium
   partitionList$largeScale <- large
 
