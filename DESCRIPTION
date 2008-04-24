@@ -1,6 +1,6 @@
 Package: ppiStats
 Title: Protein-Protein Interaction Statistical Package
-Version: 1.5.19
+Version: 1.5.20
 Author: T. Chiang and D. Scholtens with contributions from W. Huber and L. Wang
 Description: Tools for the analysis of protein interaction data.
 Depends: GO, GOstats, YEAST, graph, Category, ppiData (>= 0.1.6), ScISI (>= 1.11.1), lattice, grid,
