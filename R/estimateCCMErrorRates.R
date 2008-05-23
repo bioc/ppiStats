@@ -232,6 +232,7 @@ estimatepFP = function(pTPest,totalObsR,totalObsU,ntot){
 	
  nintEst = totalObsR/(pTPest^2)
  nint <- (max(floor(nintEst)-500,100)):(min(floor(nintEst)+500,ntot*(ntot-1)/2))
+
  MOMrange <-
     estErrProbMethodOfMoments(nint=nint,nrec=totalObsR,nunr=totalObsU,ntot=ntot)
 
