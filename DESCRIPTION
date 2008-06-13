@@ -1,10 +1,10 @@
+
 Package: ppiStats
 Title: Protein-Protein Interaction Statistical Package
-Version: 1.7.3
+Version: 1.7.4
 Author: T. Chiang and D. Scholtens with contributions from W. Huber and L. Wang
 Description: Tools for the analysis of protein interaction data.
-Depends: GO.db, GOstats, org.Sc.sgd.db, graph, Category, ppiData (>= 0.1.6), ScISI (>= 1.11.1), lattice, grid,
-         RColorBrewer, Biobase, AnnotationDbi, methods
+Depends: GO.db, GOstats, org.Sc.sgd.db, graph, Category, ppiData (>= 0.1.6), ScISI (>= 1.13.2), lattice, grid, RColorBrewer, Biobase, AnnotationDbi, methods
 Suggests: yeastExpData, geneplotter, xtable
 Maintainer: Tony Chiang <tchiang@fhcrc.org>
 License: Artistic-2.0
