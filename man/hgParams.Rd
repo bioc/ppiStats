@@ -13,9 +13,9 @@ input of the HyperGTest.}
   can be assigned to GO but not to PFAM.
 }
 \usage{
-ppiBuildParams4GO(geneSet, universe, direction="over", annot="YEAST",
+ppiBuildParams4GO(geneSet, universe, direction="over", annot="org.Sc.sgd",
                            ontology = "CC", cond=TRUE, pThresh = 0.01)
-ppiBuildParams4PFAM(geneSet, universe, annot ="YEAST",
+ppiBuildParams4PFAM(geneSet, universe, annot ="org.Sc.sgd",
                               direction = "over", pThresh=0.01)
 }
 

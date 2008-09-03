@@ -2,11 +2,11 @@ library(GO)
 library(Category)
 library(ppiStats)
 library(ppiData)
-library("YEAST")
+library("org.Sc.sgd.db")
 library("GOstats")
 
 
-yeastGenome <- names(as.list(YEASTALIAS))
+yeastGenome <- names(as.list(org.Sc.sgdALIAS))
 
   ##------------------------------------------------------------------------------------------
   cat("\n\nThis first code chunk will calculate the hypergeometric tests on the PFam Domains
@@ -17,7 +17,7 @@ yeastGenome <- names(as.list(YEASTALIAS))
 parameterVB <- lapply(viableBaits, function(x,y){new("PFAMHyperGParams",
                                       geneIds=x, 
                                       universeGeneIds=yeastGenome,
-                                      annotation="YEAST", 
+                                      annotation="org.Sc.sgd", 
                                       testDirection="over",
                                       pvalueCutoff=0.01)})
 
@@ -30,7 +30,7 @@ overVBGen <- lapply(hgTestVB, function(x) {names(which(pvalues(x)<0.01))})
 parameterVP <- lapply(viablePrey, function(x,y){new("PFAMHyperGParams",
                                       geneIds=x, 
                                       universeGeneIds=yeastGenome,
-                                      annotation="YEAST", 
+                                      annotation="org.Sc.sgd", 
                                       testDirection="over",
                                       pvalueCutoff=0.01)})
 
@@ -71,7 +71,7 @@ viablePrey <- viablePrey[vbpSysNonTriv]
 parameterSB <- mapply(function(x,y){new("PFAMHyperGParams",
                                       geneIds=x, 
                                       universeGeneIds=y,
-                                      annotation="YEAST", 
+                                      annotation="org.Sc.sgd", 
                                       testDirection="over",
                                       pvalueCutoff=0.01)},
               vbpSys,viableBaits)
@@ -83,7 +83,7 @@ overSysVB <- lapply(hgTestSB, function(x) {names(which(pvalues(x)<0.01))})
 parameterSP <- mapply(function(x,y){new("PFAMHyperGParams",
                                       geneIds=x, 
                                       universeGeneIds=y,
-                                      annotation="YEAST", 
+                                      annotation="org.Sc.sgd", 
                                       testDirection="over",
                                       pvalueCutoff=0.01)},
               vbpSys,viablePrey)

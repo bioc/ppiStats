@@ -3,7 +3,7 @@
 #[7] "utils"     "datasets"  "base"     
 
 #other attached packages:
-#     xtable     ppiData   Rgraphviz geneplotter    ppiStats       YEAST 
+#     xtable     ppiData   Rgraphviz geneplotter    ppiStats       org.Sc.sgd 
 #    "1.4-1"     "0.0.8"    "1.13.0"    "1.13.0"     "1.1.1"   "1.11.14" 
 #    GOstats    Category  genefilter    survival        KEGG        RBGL 
 #    "2.1.4"     "2.1.6"    "1.13.1"      "2.29"    "1.12.0"    "1.11.0" 
@@ -15,10 +15,10 @@
 library("GO")
 library("ppiStats")
 library("ppiData")
-library("YEAST")
+library("org.Sc.sgd")
 library("GOstats")
 library("Category")
-yeastGenome <- names(as.list(YEASTALIAS))
+yeastGenome <- names(as.list(org.Sc.sgdALIAS))
 ##
 
 ##Set up to conduct the HyperGeometric tests

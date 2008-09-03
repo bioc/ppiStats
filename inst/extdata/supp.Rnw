@@ -68,7 +68,7 @@ library("xtable")
 library("RColorBrewer")
 #data("proteinProperties")
 #library("Matrix")
-yeastGenome <- names(as.list(YEASTALIAS))
+yeastGenome <- names(as.list(org.Sc.sgdALIAS))
 options(warn=-1, error=recover, width=63)
 @ 
 
@@ -459,7 +459,7 @@ code chunck:
 #geneSet1 <- viableBaits[[length(viableBaits)]]
 #parameter1 <- ppiBuildParams4GO(geneSet = geneSet1, universe = yeastGenome,
 #                                direction = "over", ontology="CC", cond=
-#                                TRUE, pThresh=0.01, annot="YEAST.db")
+#                                TRUE, pThresh=0.01, annot="org.Sc.sgd")
 #hg1 <- ppiHGTest4GO(parameter1, filename = names(viableBaits)[1],
 #                    label = names(viableBaits)[1], 
 #                    typeGeneSet = "Viable Baits", cs = 50)
