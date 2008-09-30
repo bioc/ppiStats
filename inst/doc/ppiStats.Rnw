@@ -94,7 +94,7 @@ technology, and the set of proteins in the cell that are available for detection
 prey under the conditions of the experiment.  \cite{Chiang2007} present the notion 
 of `viability' to summarize these ideas, defining `viable baits' (VBs) as baits that 
 detect at least one prey and `viable prey' (VP) as proteins that are detected by at 
-least one bait.  It possible for a protein to be both a viable bait and a viable 
+least one bait.  It is possible for a protein to be both a viable bait and a viable 
 prey (VBP).  These definitions are important since only the edges that extend from 
 VB nodes to VP nodes are deemed `tested' in the analyses presented here.  All other 
 potential interactions (e.g. an edge between two nodes that are VP but not VBP) are 
@@ -151,7 +151,8 @@ than out-degree, or vice versa, it may be an indication that the node is subject
 more than simply stochastic measurement error in line with the sensitivity and 
 specificity of the technology.  The \Rfunction{inOutScatterCharts} function compares 
 in- and out-degree for the VBP nodes and provides boundaries for determining which 
-nodes may be particularly prone to systematic error.
+nodes may be particularly prone to systematic error according to the Binomial model 
+of \cite{Chiang2007}.
 
 <<inOutScatterCharts,echo=TRUE,results=hide>>=
 inOutScatterCharts(GavinGraphs)
@@ -163,13 +164,13 @@ inOutScatterCharts(GavinGraphs)
 \begin{figure}[htp]
   \centering
   \subfigure{
-  \includegraphics[width=3in]{scp-Gavin02-ident.pdf}
+  \includegraphics[width=2.5in]{scp-Gavin02-ident.pdf}
   }
   \subfigure{
-    \includegraphics[width=3in]{scp-Gavin02-sqrt.pdf}
+    \includegraphics[width=2.5in]{scp-Gavin02-sqrt.pdf}
   }
   \subfigure{
-    \includegraphics{scp-Gavin02-hist.pdf}
+    \includegraphics[width=4in]{scp-Gavin02-hist.pdf}
   }
   \caption{Scatter plots corresponding to the in- and out-degree (and the square 
 root of each) for the VBP nodes in Gavin02. The points within the diagonal bands 
@@ -189,13 +190,13 @@ features within the data.}
 \begin{figure}[htp]
   \centering
   \subfigure{
-  \includegraphics[width=3in]{scp-Gavin06-ident.pdf}
+  \includegraphics[width=2.5in]{scp-Gavin06-ident.pdf}
   }
   \subfigure{
-    \includegraphics[width=3in]{scp-Gavin06-sqrt.pdf}
+    \includegraphics[width=2.5in]{scp-Gavin06-sqrt.pdf}
   }
   \subfigure{
-    \includegraphics{scp-Gavin06-hist.pdf}
+    \includegraphics[width=4in]{scp-Gavin06-hist.pdf}
   }
   \caption{The same plots as described in Figure \ref{splots:Gavin02} presented here 
 for the Gavin06 data.}
@@ -203,10 +204,9 @@ for the Gavin06 data.}
 \end{figure}
 
 It appears that the Gavin06 dataset contains more proteins that are subject to 
-systematic error.  We can identify these proteints using the function 
-\Rfunction{idSystematic}, remove them from the graph, and then 
-proceed with estimation of stochastic error probabilities using the remaining VBP 
-nodes.
+systematic error than the Gavin02 dataset.  We can identify these proteints using 
+the function \Rfunction{idSystematic}, remove them from the graph, and then proceed 
+with estimation of stochastic error probabilities using the remaining VBP nodes.
 
 
 <<sepSystematicStochastic>>=
@@ -221,11 +221,11 @@ Gavin06VBPsubgraph
 
 \section*{Estimating stochastic error probabilities}
 
-Each edge between the set of VBP nodes in a graph is tested twice, once in each 
-direction.  With perfectly sensitive and specific technology, each edge would either 
-be observed twice or not observed twice.  The presence of unreciprocated edges 
-indicates the presence of measurement error - either a false positive (FP) or a 
-false negative (FN) observation.
+Each edge between the subgraph induced by the VBP nodes is tested twice, once in 
+each direction.  With perfectly sensitive and specific technology, each edge would 
+either be observed twice or not observed twice.  The presence of unreciprocated 
+edges indicates the presence of measurement error - either a false positive (FP) or 
+a false negative (FN) observation.
 
 The function \Rfunction{estimateCCMErrorRates} estimates stochastic error 
 probabilities, specifically the false positive ($p_{FP}$) and false negative 
@@ -233,7 +233,7 @@ probabilities, specifically the false positive ($p_{FP}$) and false negative
 \cite{Chiang2007}.  \Rfunction{estimateCCMErrorRates} calls 
 \Rfunction{estErrProbMethodOfMoments} to compute a solution manifold and then 
 selects a single pair of estimates for $p_{FP}$ and $p_{FN}$ using a gold standard 
-as described in \cite{Scholtens2008}.  In the example below, we use the 
+approach as described in \cite{Scholtens2008}.  In the example below, we use the 
 \Robject{ScISIC} dataset from the package \Rpackage{ScISI} as the gold standard.  
 This is a set of manurally curated complexes culled from GO and MIPS and serves to 
 define a set of edges that should be detected by AP-MS technology.
@@ -281,9 +281,9 @@ Gavin06VBPobserved$unrecipOutDegree[5:10]
 Gavin06VBPobserved$recipIn[5:10]
 @
 
-The function \Rfunction{degreeEstimates} estimates degree according to the 
-parametric model described by \cite{Scholtens2008} using the observed data and the 
-stochastic error probability estimates.  
+The function \Rfunction{degreeEstimates} estimates degree for VBP nodes according to 
+the parametric model described by \cite{Scholtens2008} using the observed data and 
+the stochastic error probability estimates.
 
 <<estimateDegree>>=
 Gavin06VBPdegree = degreeEstimates(Gavin06m,pTPestimate,pFPestimate)
