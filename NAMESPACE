@@ -1,5 +1,12 @@
-import("methods", "Category", "AnnotationDbi", "graph")
-importMethodsFrom("Biobase", "annotation", "description")
+importMethodsFrom(Category, htmlReport, hyperGTest, pvalues)
+importMethodsFrom(graph, adj, degree, edges, isDirected, nodes)
+importFrom(Biobase, listLen)
+importFrom(graphics, hist, lines, par, plot)
+importFrom(grDevices, dev.off, pdf, postscript)
+importFrom(lattice, barchart)
+importFrom(methods, as, new)
+importFrom(RColorBrewer, brewer.pal)
+importFrom(stats, dbinom, dmultinom, fisher.test, pbinom, qbinom)
 
 export(assessSymmetry, bpMatrix, calcInOutDegStats, degreeEstimates,
        estErrProbMethodOfMoments, estimateCCMErrorRates, findAdjacent,
