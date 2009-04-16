@@ -59,7 +59,6 @@
 \setkeys{Gin}{width=0.9\textwidth}
 <<loadlibs,echo=FALSE, results = hide>>=
 library("ppiStats")
-library("geneplotter")
 #library("yeastExpData")
 library("lattice")
 library("grid")
