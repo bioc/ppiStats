@@ -36,10 +36,6 @@ ppiBuildParams4PFAM(geneSet, universe, annot ="org.Sc.sgd",
 \value{
   A object of class hyperGParams.
 }
-\references{}
 \author{T Chiang}
 
-\examples{
-
-}
 \keyword{datagen}

@@ -37,10 +37,6 @@ ppiHGTest4PFAM(parameter, filename, append = TRUE,
 \value{
   A instance of the class hyperGTest as well as an .html file.
 }
-\references{}
 \author{T Chiang}
 
-\examples{
-
-}
 \keyword{datagen}

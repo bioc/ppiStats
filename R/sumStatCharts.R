@@ -21,10 +21,10 @@ createSummaryTables <- function(dataGraphs){
                     VB=numVB,
                     VP=numVP,
                     VBP=numVBP,
-                    "VBP/VB"=round(numVBP/numVB, digit=2),
-                    "VP/VB"=round(numVP/numVB,digit=2),
+                    "VBP/VB"=round(numVBP/numVB, digits=2),
+                    "VP/VB"=round(numVP/numVB,digits=2),
                     "TI"=numInteractions,
-                    "TI/VB"=round(numInteractions/numVB,digit=2), 
+                    "TI/VB"=round(numInteractions/numVB,digits=2), 
                     check.names=FALSE,  row.names=dNames)
 
   return(EDA)

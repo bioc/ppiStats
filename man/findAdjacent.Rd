@@ -24,7 +24,4 @@ findAdjacent(x,bait)
 
 \author{Denise Scholtens}
 
-\examples{
-
-}
 \keyword{graphs}
