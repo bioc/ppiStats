@@ -1,6 +1,6 @@
 Package: ppiStats
 Title: Protein-Protein Interaction Statistical Package
-Version: 1.37.0
+Version: 1.38.0
 Author: T. Chiang and D. Scholtens with contributions from W. Huber and
         L. Wang
 Description: Tools for the analysis of protein interaction data.
