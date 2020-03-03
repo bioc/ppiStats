@@ -25,7 +25,7 @@ estimatePPIErrorRates <- function(matList, GSPos=NULL, GSNeg=NULL){
 
   ##if both GS's are given, we will use the pfp and pfn estimates
   ##derived above
-  if(!(pfnList) && !(pfpList)){
+  if(!is.null(pfnList) && !is.null(pfpList)){
     errorMat <- cbind(pfnList, pfpList)
     colnames(errorMat) <- c("pfn","pfp")
     rownames(errorMat) <- names(matList)
