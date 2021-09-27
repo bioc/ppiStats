@@ -17,14 +17,14 @@ createSummaryTables <- function(dataGraphs){
   numInteractions <- sapply(indeg, sum)
 
   EDA <- data.frame(
-                    
+
                     VB=numVB,
                     VP=numVP,
                     VBP=numVBP,
                     "VBP/VB"=round(numVBP/numVB, digits=2),
                     "VP/VB"=round(numVP/numVB,digits=2),
                     "TI"=numInteractions,
-                    "TI/VB"=round(numInteractions/numVB,digits=2), 
+                    "TI/VB"=round(numInteractions/numVB,digits=2),
                     check.names=FALSE,  row.names=dNames)
 
   return(EDA)
@@ -36,8 +36,8 @@ tot <- total
 
 EDA <- createSummaryTables(dataGraphs)
 
-EDAsub <- 
-    with(EDA, 
+EDAsub <-
+    with(EDA,
          data.frame(Expt = rownames(EDA),
                     VB   = VB - VBP,
                     VBP  = VBP,
@@ -46,22 +46,23 @@ EDAsub <-
 
 bcol <- c(brewer.pal(9, "Pastel1")[9], brewer.pal(12, "Paired")[1:3])[c(2, 3, 4, 1)]
 
-bc <- barchart(reorder(Expt, -unt) ~ VB + VBP + VP + unt, 
+bc <- barchart(reorder(Expt, -unt) ~ VB + VBP + VP + unt,
              data = EDAsub, stack = TRUE,
-             auto.key = 
+             auto.key =
              list(text = c("Viable Bait only", "Both Viable Prey and Bait",
-                    "Viable Prey only", "Absent"),columns = 1, adj = 1), 
+                    "Viable Prey only", "Absent"),columns = 1, adj = 1),
              xlab = "Number of proteins",
              par.settings = list(superpose.polygon = list(border = "transparent", col = bcol )))
 
 plot(bc)
-  
+
 
 }
 
 
-inOutScatterCharts <- function(dataGraphs, pThresh=0.01, pLevels=1e-4){
-
+inOutScatterCharts <-
+  function(dataGraphs, pThresh=0.01, pLevels=1e-4, saveDir = tempdir())
+{
   bpRed = new.env(parent=globalenv(), hash=FALSE)
   ##bpMat <- lapply(dataGraphs, function(x) {as(x, "matrix")})
 
@@ -69,16 +70,16 @@ inOutScatterCharts <- function(dataGraphs, pThresh=0.01, pLevels=1e-4){
     bpMat = new.env(parent=globalenv(), hash=FALSE)
     expNames <- names(dataGraphs)
     for(p in 1:length(dataGraphs)) {
-      
+
       m = as(dataGraphs[[p]], "matrix")
       ## delete self-edges
-      diag(m) = 0  
-      
+      diag(m) = 0
+
       stopifnot(identical(rownames(m), colnames(m)))
       vbp = rownames(m)[ (rowSums(m)>0) & (colSums(m)>0) ]
-      
+
       m = m[vbp, vbp]
-      
+
       if(nrow(m)>1) {
         assign(expNames[[p]], m, envir=bpMat)
       } else {
@@ -86,44 +87,72 @@ inOutScatterCharts <- function(dataGraphs, pThresh=0.01, pLevels=1e-4){
       }
     }
   }
-  
-  out = file("unrecipInOutDistribIncludes.tex", open="wt")
-  
+
+  out = file(file.path(saveDir, "unrecipInOutDistribIncludes.tex"), open="wt")
+
   for(name in ls(bpMat)) {
     f = assessSymmetry(bpMat[[name]])
     sel = (f$p>=pThresh)
     assign(name, bpMat[[name]][sel, sel], envir=bpRed)
-    
-    myPDF = function(x, ch, ...) {
-      fn = sprintf("scp-%s-%s.pdf", name, ch)
+
+    myPDF = function(x, ch, saveDir = tempdir(), ...) {
+      fn = sprintf(file.path(saveDir, "scp-%s-%s.pdf"), name, ch)
       pdf(file=fn, ...)
       x
       dev.off()
       return(fn)
     }
-    myEPS = function(x, ch, ...) {
-      fn = sprintf("scp-%s-%s.eps", name, ch)
-      postscript(file=fn, horizontal = FALSE, onefile = FALSE, paper = "special", ...)
-      x
-      dev.off()
+    myEPS = function(x, ch, saveDir = tempdir(), ...) {
+      fn = sprintf(file.path(saveDir, "scp-%s-%s.eps"), name, ch)
+      if (saveDir != tempdir()) {
+        postscript(
+            file=fn, horizontal = FALSE, onefile = FALSE,
+            paper = "special", ...
+        )
+        x
+        dev.off()
+      }
       return(fn)
     }
-    
-    f1=myPDF(scpFun(f, "identity", pLevels = pLevels), ch="ident", width=4, height=4)
-    f2=myPDF(scpFun(f, "sqrt", pLevels=pLevels), ch="sqrt", width=4, height=4)
-    f2e=myEPS(scpFun(f, "sqrt", pLevels=pLevels), ch="sqrt", width=4, height=4)
-    f3=myPDF(hist(f$p, main=name, xlab='p', col="skyblue", breaks=seq(0, 1, by=0.01)), 
-      ch="hist", width=6, height=2.1)
-    
+
+    f1 <- myPDF(
+        scpFun(f, "identity", pLevels = pLevels),
+        ch="ident", saveDir = saveDir, width=4, height=4
+    )
+    f2 <- myPDF(
+        scpFun(f, "sqrt", pLevels=pLevels),
+        ch="sqrt", saveDir = saveDir, width=4, height=4
+    )
+    f2e <- myEPS(
+        scpFun(f, "sqrt", pLevels=pLevels),
+        ch="sqrt", saveDir = saveDir, width=4, height=4
+    )
+    f3 <- myPDF(
+        hist(f$p, main=name, xlab='p', col="skyblue",
+        saveDir = saveDir, breaks=seq(0, 1, by=0.01)),
+        ch="hist", width=6, height=2.1
+    )
+
     cat("\\begin{figure}[tp]\\begin{center}\n", file=out)
-    cat(sprintf("\\includegraphics[width=0.5\\textwidth]{%s}\n", f1), file=out)
-    cat(sprintf("\\includegraphics[width=0.5\\textwidth]{%s}\\\n", f2), file=out)
-    cat(sprintf("\\includegraphics[width=0.8\\textwidth]{%s}\n", f3), file=out)
-    cat(sprintf("\\caption{Scatterplots of in- and out-degree and symmetry $p$-values for %s}\n",
-                name), file=out)
+    cat(
+        sprintf("\\includegraphics[width=0.5\\textwidth]{%s}\n", f1), file=out
+    )
+    cat(sprintf("\\includegraphics[width=0.5\\textwidth]{%s}\\\n", f2),
+        file=out)
+    cat(sprintf("\\includegraphics[width=0.8\\textwidth]{%s}\n", f3),
+        file=out)
+    cat(
+        sprintf(
+            paste0("\\caption{Scatterplots of in- and out-degree and symmetry",
+            " $p$-values for %s}\n"
+            ),
+            name
+        ),
+        file=out
+    )
     cat("\\end{center}\\end{figure}\n", file=out)
   }
-  
+
   close(out)
 }
 

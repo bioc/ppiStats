@@ -53,9 +53,9 @@ degree in bait-prey graphs. \emph{Bioinformatics}.  To appear.}
 \author{T. Chiang and D. Scholtens}
 
 \examples{
-data(Ho2002BPGraph)
-data(ScISIC)
-Ho2002mat = as(Ho2002BPGraph,"matrix")
+data(Ho2002BPGraph, package = "ppiData")
+data(ScISIC, package = "ScISI")
+Ho2002mat <- as(Ho2002BPGraph,"matrix")
 estimateCCMErrorRates(Ho2002mat,ScISIC)$globalpTP
 }
 

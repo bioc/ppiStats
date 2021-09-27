@@ -54,7 +54,7 @@ graph:
 }
 \author{T Chiang}
 \examples{
-	library(ppiData)
+	data("Cagney2001BPGraph", package = "ppiData")
 	degStat <- calcInOutDegStats(Cagney2001BPGraph)
 	degStat$recipOutDeg
 }

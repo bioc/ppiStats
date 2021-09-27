@@ -40,7 +40,8 @@ idStochastic(bpMat, bpGraph = FALSE, pThresh = 0.01, pLevels =
 \author{T Chiang}
 
 \examples{
-library(ppiData)
+data("Ito2001BPGraph", package = "ppiData")
+data("viableBaits", package = "ppiData")
 idSystematic(Ito2001BPGraph, viableBaits[[1]], bpGraph=TRUE)
 }
 \keyword{datagen}

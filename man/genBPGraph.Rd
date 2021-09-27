@@ -36,9 +36,8 @@ genBPGraph(bpMat, directed=TRUE, bp=TRUE)
 
 
 \examples{
-library(ppiData)
 library(graph)
-data(y2hSysGW)
+data("y2hSysGW", package = "ppiData")
 eg=y2hSysGW[[3]]
 egMat = bpMatrix(eg)
 genBPGraph(egMat)

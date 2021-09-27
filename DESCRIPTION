@@ -4,10 +4,9 @@ Version: 1.59.1
 Author: T. Chiang and D. Scholtens with contributions from W. Huber and
         L. Wang
 Description: Tools for the analysis of protein interaction data.
-Depends: ScISI (>= 1.13.2), lattice, ppiData (>= 0.1.19)
 Imports: Biobase, Category, graph, graphics, grDevices, lattice,
         methods, RColorBrewer, stats
-Suggests: yeastExpData, xtable
+Suggests: yeastExpData, xtable, ppiData, ScISI
 Maintainer: Bioconductor Package Maintainer
         <maintainer@bioconductor.org>
 License: Artistic-2.0

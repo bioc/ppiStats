@@ -26,8 +26,11 @@ viabilityCharts(dataGraphs, total=6466)
 
 
 \examples{
-graphs = lapply(bpExperimentNames, function(x) get(x))
-names(graphs) = bpExperimentNames
+data("bpExperimentNames", package = "ppiData")
+graphs <- new.env(parent = emptyenv())
+data(list = bpExperimentNames, package = "ppiData", envir = graphs)
+graphs <- lapply(bpExperimentNames, function(x) graphs[[x]])
+names(graphs) <- bpExperimentNames
 viabilityCharts(graphs)
 }
 \keyword{datagen}

@@ -239,7 +239,7 @@ This is a set of manurally curated complexes culled from GO and MIPS and serves 
 define a set of edges that should be detected by AP-MS technology.
 
 <<estimateStochasticErrorProbabilities>>=
-data(ScISIC)
+data(ScISIC, package = "ScISI")
 
 Gavin06m = as(Gavin06VBPsubgraph,"matrix")
 errorProbabilities = estimateCCMErrorRates(Gavin06m,ScISIC)

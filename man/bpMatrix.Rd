@@ -53,8 +53,7 @@ bpMatrix(y2h, symMat = TRUE, homodimer = FALSE, baitAsPrey = FALSE,
 \author{T Chiang}
 
 \examples{
-library(ppiData)
-data(y2hSysGW)
+data("y2hSysGW", package = "ppiData")
 eg <- y2hSysGW[2:4]
 lapply(eg, bpMatrix)
 }

@@ -10,7 +10,7 @@
   threshold (the binomial test presumes p = 0.5).  
 }
 \usage{
-inOutScatterCharts(dataGraphs, pThresh=0.01, pLevels=1e-4)
+inOutScatterCharts(dataGraphs, pThresh=0.01, pLevels=1e-4, saveDir = tempdir())
 }
 
 \arguments{
@@ -18,6 +18,8 @@ inOutScatterCharts(dataGraphs, pThresh=0.01, pLevels=1e-4)
   \item{pThresh}{The two-sided p-value threshold for the binomial testing
   for potentially biased nodes}
   \item{pLevels}{Figure out what this does}
+  \item{saveDir}{Directory for saving files. If none provided, \code{tempdir()}
+  used by default.}
 }
 
 \value{
@@ -38,8 +40,11 @@ inOutScatterCharts(dataGraphs, pThresh=0.01, pLevels=1e-4)
 
 
 \examples{
-graphs = lapply(bpExperimentNames, function(x) get(x))
-names(graphs) = bpExperimentNames
-#inOutScatterCharts(graphs)
+data("bpExperimentNames", package = "ppiData")
+graphs <- new.env(parent = emptyenv())
+data(list = bpExperimentNames, package = "ppiData", envir = graphs)
+graphs <- lapply(bpExperimentNames, function(x) graphs[[x]])
+names(graphs) <- bpExperimentNames
+inOutScatterCharts(graphs)
 }
 \keyword{datagen}
