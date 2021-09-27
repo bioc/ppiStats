@@ -41,7 +41,7 @@ assessSymmetry(bpMat, bpGraph = FALSE,
 \author{W Huber}
 
 \examples{
-library(ppiData)
+data("Ito2001BPGraph", package = "ppiData")
 assessSymmetry(Ito2001BPGraph, bpGraph=TRUE)
 }
 \keyword{datagen}
