@@ -129,8 +129,8 @@ inOutScatterCharts <-
     )
     f3 <- myPDF(
         hist(f$p, main=name, xlab='p', col="skyblue",
-        saveDir = saveDir, breaks=seq(0, 1, by=0.01)),
-        ch="hist", width=6, height=2.1
+            breaks=seq(0, 1, by=0.01)),
+        ch="hist", saveDir = saveDir, width=6, height=2.1
     )
 
     cat("\\begin{figure}[tp]\\begin{center}\n", file=out)
