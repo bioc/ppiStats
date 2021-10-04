@@ -10,7 +10,7 @@
 \documentclass[11pt]{article}
 
 
-\usepackage{amsmath,pstricks}
+\usepackage{amsmath}
 \usepackage[authoryear,round]{natbib}
 \usepackage{hyperref}
 \usepackage{times}
@@ -160,18 +160,18 @@ inOutScatterCharts(GavinGraphs)
 
 
 
-
 \begin{figure}[htp]
   \centering
-  \subfigure{
-  \includegraphics[width=2.5in]{scp-Gavin02-ident.pdf}
-  }
-  \subfigure{
-    \includegraphics[width=2.5in]{scp-Gavin02-sqrt.pdf}
-  }
-  \subfigure{
-    \includegraphics[width=4in]{scp-Gavin02-hist.pdf}
-  }
+<<results=tex,echo=FALSE>>=
+for (i in 1:3) {
+    suff <- c("ident", "sqrt", "hist")
+    wd <- c("2.5", "2.5", "4")
+    fname <- file.path(tempdir(), paste0("scp-Gavin02-", suff[i], ".pdf"))
+    widthstring <-
+        paste0("\\subfigure{\n\\includegraphics[width=", wd[i], "in]{")
+    cat(widthstring, fname, "}\n}\n", sep = "")
+}
+@
   \caption{Scatter plots corresponding to the in- and out-degree (and the square 
 root of each) for the VBP nodes in Gavin02. The points within the diagonal bands 
 represent those proteins for which there is not enough evidence to reject the null 
@@ -189,15 +189,16 @@ features within the data.}
 
 \begin{figure}[htp]
   \centering
-  \subfigure{
-  \includegraphics[width=2.5in]{scp-Gavin06-ident.pdf}
-  }
-  \subfigure{
-    \includegraphics[width=2.5in]{scp-Gavin06-sqrt.pdf}
-  }
-  \subfigure{
-    \includegraphics[width=4in]{scp-Gavin06-hist.pdf}
-  }
+<<results=tex,echo=FALSE>>=
+for (i in 1:3) {
+    suff <- c("ident", "sqrt", "hist")
+    wd <- c("2.5", "2.5", "4")
+    fname <- file.path(tempdir(), paste0("scp-Gavin06-", suff[i], ".pdf"))
+    widthstring <-
+        paste0("\\subfigure{\n\\includegraphics[width=", wd[i], "in]{")
+    cat(widthstring, fname, "}\n}\n", sep = "")
+}
+@
   \caption{The same plots as described in Figure \ref{splots:Gavin02} presented here 
 for the Gavin06 data.}
   \label{splots:Gavin06}
