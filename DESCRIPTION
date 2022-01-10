@@ -1,6 +1,6 @@
 Package: ppiStats
 Title: Protein-Protein Interaction Statistical Package
-Version: 1.61.0
+Version: 1.61.1
 Author: T. Chiang and D. Scholtens with contributions from W. Huber and
         L. Wang
 Description: Tools for the analysis of protein interaction data.
@@ -11,3 +11,4 @@ Maintainer: Bioconductor Package Maintainer
         <maintainer@bioconductor.org>
 License: Artistic-2.0
 biocViews: Proteomics, GraphAndNetwork, Network, NetworkInference
+PackageStatus: Deprecated
